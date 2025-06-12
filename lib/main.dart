@@ -18,6 +18,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: '흔적',
       theme: ThemeData(
+        textTheme: TextTheme(
+          bodyMedium: TextStyle(color: Color.fromRGBO(51, 51, 51, 1)),
+        ),
         fontFamily: 'SUITE',
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
         scaffoldBackgroundColor: Colors.white,
