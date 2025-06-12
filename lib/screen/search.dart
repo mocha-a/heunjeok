@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:heunjeok/controller/book_controller.dart';
-import 'package:heunjeok/screen/widgets/search_book.dart';
-import 'package:heunjeok/screen/widgets/search_write.dart';
+import 'package:heunjeok/widgets/search_book.dart';
+import 'package:heunjeok/widgets/search_write.dart';
 
 class Search extends StatefulWidget {
   const Search({super.key});
