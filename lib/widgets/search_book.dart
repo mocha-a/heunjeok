@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:heunjeok/controller/book_controller.dart';
+import 'package:heunjeok/screen/detail.dart';
 
 class SearchBook extends StatelessWidget {
   SearchBook({Key? key}) : super(key: key);
@@ -63,37 +64,47 @@ class SearchBook extends StatelessWidget {
           const SizedBox(height: 16),
           Expanded(
             child: GridView.count(
-              crossAxisCount: 3,
+              crossAxisCount: 2,
               mainAxisSpacing: 16,
               crossAxisSpacing: 16,
               shrinkWrap: true,
-              childAspectRatio: 0.5,
+              childAspectRatio: 0.58,
               children: books.map((book) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AspectRatio(
-                      aspectRatio: 3 / 4, // 이미지 비율 맞추기 좋음
-                      child: Image.network(book['cover'], fit: BoxFit.cover),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      book['title'] ?? '',
-                      style: TextStyle(fontSize: 18),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      "${book['author']} · ${book['publisher']}",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: const Color.fromRGBO(85, 85, 85, 1),
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => Detail(id: book['itemId']),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    );
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 3 / 4, // 이미지 비율 맞추기 좋음
+                        child: Image.network(book['cover'], fit: BoxFit.cover),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        book['title'] ?? '',
+                        style: TextStyle(fontSize: 18),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        "${book['author']} · ${book['publisher']}",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: const Color.fromRGBO(85, 85, 85, 1),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 );
               }).toList(),
             ),
