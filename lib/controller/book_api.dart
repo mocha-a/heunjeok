@@ -5,7 +5,7 @@ class BookApi {
   // 베스트셀러
   static Future<List<dynamic>> bestsellerApi() async {
     final response = await http.get(
-      Uri.parse('http://localhost/bestseller.php'),
+      Uri.parse('http://localhost/heunjeok-server/bestseller.php'),
     );
 
     if (response.statusCode == 200) {
@@ -21,7 +21,7 @@ class BookApi {
   static Future<List<dynamic>> searchApi(String query) async {
     final response = await http.get(
       Uri.parse(
-        'http://localhost/search.php?query=${Uri.encodeComponent(query)}',
+        'http://localhost/heunjeok-server/search.php?query=${Uri.encodeComponent(query)}',
       ),
     );
 
