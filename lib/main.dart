@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+import 'package:heunjeok/controller/book_controller.dart';
 import 'package:heunjeok/screen/book.dart';
 import 'package:heunjeok/screen/detail.dart';
 import 'package:heunjeok/screen/home.dart';
 import 'package:heunjeok/screen/search.dart';
 
 void main() {
+  Get.put(BookController());
   runApp(const MyApp());
 }
 
@@ -18,8 +21,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: '흔적',
       theme: ThemeData(
+        textTheme: TextTheme(
+          bodyMedium: TextStyle(color: Color.fromRGBO(51, 51, 51, 1)),
+        ),
         fontFamily: 'SUITE',
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.transparent),
+        appBarTheme: AppBarTheme(backgroundColor: Colors.transparent),
         scaffoldBackgroundColor: Colors.white,
       ),
 
@@ -66,7 +73,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int seletedIndex = 0;
-  bool isSelected = true;
 
   void changeIndex(int idx) {
     setState(() {
