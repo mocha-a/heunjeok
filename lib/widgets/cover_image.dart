@@ -19,7 +19,7 @@ class CoverImage extends StatelessWidget {
         Container(
           width: double.infinity,
           height: height,
-          child: Image.asset(imagePath, fit: BoxFit.cover),
+          child: Image.network(imagePath, fit: BoxFit.cover),
         ),
         // 배경 이미지 블러 처리
         Positioned.fill(
@@ -31,7 +31,7 @@ class CoverImage extends StatelessWidget {
         // 커버 이미지
         Positioned.fill(
           child: Center(
-            child: Image.asset(
+            child: Image.network(
               imagePath,
               height: height - 80, // 조절 가능
               fit: BoxFit.contain,

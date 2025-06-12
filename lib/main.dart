@@ -2,13 +2,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:heunjeok/controller/book_controller.dart';
 import 'package:heunjeok/screen/book.dart';
-import 'package:heunjeok/screen/detail.dart';
 import 'package:heunjeok/screen/home.dart';
 import 'package:heunjeok/screen/search.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); //flutter에서 모든 비동기 작업이면 해당 문장을 넣어줘야 함
+  await Hive.initFlutter(); //hive 초기화
+  await Hive.openBox('scheduleBox'); //문서 생성
+  await Hive.openBox<String>('recentSearchBox');
+
   Get.put(BookController());
   runApp(const MyApp());
 }
