@@ -16,7 +16,8 @@ class _HalfClipper extends CustomClipper<Rect> {
 }
 
 class Book extends StatefulWidget {
-  const Book({super.key});
+  void Function(double) changePadding;
+  Book({super.key, required this.changePadding});
 
   @override
   State<Book> createState() => _MyWidgetState();
@@ -33,6 +34,7 @@ class _MyWidgetState extends State<Book> {
 
     // 실제 서버 호출로 변경하기
     fetchBookAndReviews(1);
+    widget.changePadding(18);
   }
 
   void fetchBookAndReviews(int id) async {
@@ -66,7 +68,7 @@ class _MyWidgetState extends State<Book> {
         "image": "assets/image.jpg",
         "date": "2025.05.20",
         "content":
-            "이제는 ‘클래식힙’ 트렌드! 유튜브 인기채널 ‘클래식좀들어라’의 플레이리스트를 책으로 만나다  이 책은 구독자들의 뜨거운 사랑을 받은 유튜브 채널 ‘클래식좀들어라’의 플레이리스트를 기반으로, 젊은 감각으로 클래식 음악을 소개하는 신개념 입문서다. 흔히들 생각하는 클래식의 이미지처럼 점잖고 고상한 스타일이 아닌, 톡톡 튀는 재미와 친근함으로 대중들에게 다가간다는 점이 특징이다. 이런 분께 추천합니다! “클래식, 들어야 할 것 같긴 한데 뭐부터 들어야 할지 모르겠어요.” “뻔하고 지루한 교양서, 이제 그만!” “감성 충만한 플레이리스트로 하루를 채우고 싶어요.” “BGM으로만 듣던 클래식, 그 매력을 좀 더 알고 즐기고 싶어요.",
+            "이제는 ‘클래식힙’ 트렌드!유튜브 인기채널 ‘클래식좀들어라’의 플레이리스트를 책으로 만나다이 책은 구독자들의 뜨거운 사랑을 받은 유튜브 채널 ‘클래식좀들어라’의 플레이리스트를 기반으로, 젊은감각으로 클래식 음악을 소개하는 신개념 입문서다. 흔히들 생각하는 클래식의 이미지처럼 점잖고 고상한스타일이 아닌, 톡톡 튀는 재미와 친근함으로 대중들에게 다가간다는 점이 특징이다.이런 분께 추천합니다!“클래식, 들어야 할 것 같긴 한데 뭐부터 들어야 할지 모르겠어요.”“뻔하고 지루한 교양서, 이제 그만!”“감성 충만한 플레이리스트로 하루를 채우고 싶어요.”“BGM으로만 듣던 클래식, 그 매력을 좀 더 알고 즐기고 싶어요.",
       },
     ];
     setState(() {

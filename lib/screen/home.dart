@@ -13,7 +13,8 @@ import 'package:heunjeok/widgets/cover_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Home extends StatefulWidget {
-  const Home({super.key});
+  void Function(double) changePadding;
+  Home({super.key, required this.changePadding});
 
   @override
   State<Home> createState() => _MyWidgetState();
@@ -34,7 +35,7 @@ class _MyWidgetState extends State<Home> {
     }
   }
 
-  final BookController bookController = Get.put(BookController());
+  final BookController bookController = Get.find<BookController>();
 
   bool isLoading = true;
   List<dynamic> books = [];
@@ -47,6 +48,7 @@ class _MyWidgetState extends State<Home> {
   void initState() {
     super.initState();
     loadAllData();
+    widget.changePadding(0);
   }
 
   Future<void> loadAllData() async {
@@ -93,10 +95,15 @@ class _MyWidgetState extends State<Home> {
       child: Column(
         children: [
           SizedBox(
+            width: double.infinity,
             height: 700,
             child: CardSwiper(
               cardsCount: books2.length,
               numberOfCardsDisplayed: 2,
+              allowedSwipeDirection: AllowedSwipeDirection.only(
+                left: true,
+                right: true,
+              ),
               cardBuilder:
                   (
                     context,
@@ -227,6 +234,8 @@ class _MyWidgetState extends State<Home> {
             ),
           ),
           const SizedBox(height: 40),
+
+          //추천도서
           Container(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,16 +399,31 @@ class _MyWidgetState extends State<Home> {
               ],
             ),
           ),
+          const SizedBox(height: 40),
           Container(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text('흔적'),
-                Container(width: 100, child: Divider()),
-                Text('대표 : 소연희, 안지현'),
-                Text('서울특별시 강남구 강남대로98길 16'),
-                Text('사업자번호 : 123-45-67890'),
-                Text('heunjeok@gmail.com'),
+                Text(
+                  '흔적',
+                  style: TextStyle(
+                    fontSize: 31,
+                    color: Color.fromRGBO(182, 187, 121, 1),
+                    fontFamily: 'Ownglyph',
+                  ),
+                ),
+                Container(width: 150, child: Divider()),
+                Text(
+                  '''
+대표 : 소연희, 안지현
+서울특별시 강남구 강남대로98길 16
+사업자번호 : 123-45-67890
+heunjeok@gmail.com
+                    ''',
+                  style: TextStyle(height: 1.3),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -420,6 +444,7 @@ class _MyWidgetState extends State<Home> {
               ],
             ),
           ),
+          const SizedBox(height: 80),
         ],
       ),
     );

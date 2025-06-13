@@ -78,6 +78,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int seletedIndex = 0;
+  double padding = 18.0;
+  late List<Widget> pageList;
 
   void changeIndex(int idx) {
     setState(() {
@@ -85,7 +87,25 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  List<Widget> pageList = [Home(), Book(), Search()];
+  void changePadding(double idx) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        padding = idx;
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 여기서 인스턴스 메서드 참조 가능하니까 초기화
+    pageList = [
+      Home(changePadding: changePadding),
+      Book(changePadding: changePadding),
+      Search(changePadding: changePadding),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.white,
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+        padding: EdgeInsets.symmetric(horizontal: padding),
         child: pageList[seletedIndex],
       ),
       bottomNavigationBar: BottomNavigationBar(

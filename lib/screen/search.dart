@@ -7,7 +7,8 @@ import 'package:heunjeok/widgets/search_book.dart';
 import 'package:heunjeok/widgets/search_write.dart';
 
 class Search extends StatefulWidget {
-  const Search({super.key});
+  void Function(double) changePadding;
+  Search({super.key, required this.changePadding});
 
   @override
   State<Search> createState() => _SearchWidgetState();
@@ -15,28 +16,30 @@ class Search extends StatefulWidget {
 
 class _SearchWidgetState extends State<Search>
     with SingleTickerProviderStateMixin {
-  final BookController bookController = Get.put(BookController());
+  //Getx의 BookController 찾아서 가져오기
+  final BookController bookController = Get.find<BookController>();
+
+  //탭 컨트롤러
+  late TabController _tabController;
+
+  //검색창 텍스트
   final TextEditingController _controller = TextEditingController();
 
-  late TabController _tabController;
+  //최근검색어
+  List<String> recentSearch = [];
+
+  //Hive 최근검색어 박스
+  late Box<String> recentSearchBox;
 
   @override
   void initState() {
     super.initState();
+    // 탭 2개~
     _tabController = TabController(length: 2, vsync: this);
-    recentSearchBox = Hive.box<String>('recentSearchBox');
     // Hive에 저장된 최근검색어 불러오기
-    recentSearch = recentSearchBox.values.toList();
-  }
-
-  void addSearchQuery(String query) {
-    if (!recentSearch.contains(query)) {
-      setState(() {
-        recentSearch.add(query);
-      });
-      // Hive에 저장 (중복 방지 위해 추가 전에 확인했으니 그냥 추가)
-      recentSearchBox.add(query);
-    }
+    recentSearchBox = Hive.box<String>('recentSearchBox');
+    recentSearch = recentSearchBox.values.toList().reversed.toList();
+    widget.changePadding(18);
   }
 
   @override
@@ -46,14 +49,9 @@ class _SearchWidgetState extends State<Search>
     super.dispose();
   }
 
-  List<String> recentSearch = []; //최근검색어
-
-  late Box<String> recentSearchBox;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(toolbarHeight: 0, backgroundColor: Colors.white),
       body: Column(
         children: [
           // 검색창
@@ -84,66 +82,81 @@ class _SearchWidgetState extends State<Search>
                   padding: const EdgeInsets.only(right: 25),
                   child: IconButton(
                     icon: SvgPicture.asset('search_white.svg'),
-                    onPressed: () => bookController.searchInput(_controller),
+                    onPressed: () async {
+                      final value = _controller.text.trim();
+                      await addRecentSearch(value);
+                      bookController.search(_controller.text);
+                      _controller.clear();
+                    },
                   ),
                 ),
               ),
               style: TextStyle(color: Colors.white),
-              onSubmitted: (_) => bookController.searchInput(
-                _controller,
-              ), // 키보드 검색 버튼 눌렀을 때도 실행
+
+              // 키보드 검색 버튼
+              onSubmitted: (value) async {
+                await addRecentSearch(value);
+                bookController.search(_controller.text);
+                _controller.clear();
+              },
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              width: double.infinity,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('최근 검색어'),
-                  SizedBox(height: 8), // 텍스트 아래 여백
-                  Wrap(
-                    alignment: WrapAlignment.start, // ← 정렬 왼쪽으로
-                    spacing: 6, // 요소들 가로 여백
-                    runSpacing: 6, // 줄 간 여백
-                    children: recentSearch.map((item) {
-                      return InkWell(
+          //최근 검색어
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('최근 검색어'),
+              SizedBox(height: 5),
+              SizedBox(
+                height: 30,
+                child: Row(
+                  children: recentSearch.map((item) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: InkWell(
                         borderRadius: BorderRadius.circular(20),
                         onTap: () {
-                          _controller.text = item; // 검색창에 검색어 넣고
-                          bookController.searchInput(
-                            _controller,
-                          ); // 검색 함수 호출해서 결과 보여주고
+                          _controller.text = item;
+                          bookController.search(item);
+                          addRecentSearch(item);
                         },
                         child: Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: 10,
-                            vertical: 6,
-                          ), // 내부 여백
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color: Color.fromRGBO(232, 192, 252, 1),
+                              color: Color.fromRGBO(182, 187, 121, 1),
                               width: 1,
                             ),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(item, overflow: TextOverflow.ellipsis),
                         ),
-                      );
-                    }).toList(),
-                  ),
-                ],
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
-            ),
+              SizedBox(height: 10),
+            ],
           ),
 
-          // 2. 탭바
+          // 탭바
           TabBar(
             controller: _tabController,
             labelColor: const Color.fromRGBO(51, 51, 51, 1),
             unselectedLabelColor: Colors.grey,
-            indicatorColor: const Color.fromRGBO(182, 187, 121, 1),
+
+            indicator: UnderlineTabIndicator(
+              borderSide: BorderSide(
+                width: 3.0,
+                color: Color.fromRGBO(182, 187, 121, 1),
+              ),
+            ),
+            indicatorSize: TabBarIndicatorSize.tab, //밑줄 길이
             tabs: const [
               Tab(
                 child: Text(
@@ -160,7 +173,7 @@ class _SearchWidgetState extends State<Search>
             ],
           ),
 
-          // 3. 탭뷰 - 남은 공간 다 차지하게 Expanded로 감싸기
+          //탭뷰
           Expanded(
             child: TabBarView(
               controller: _tabController,
@@ -170,5 +183,27 @@ class _SearchWidgetState extends State<Search>
         ],
       ),
     );
+  }
+
+  // 최근 검색어 Box 저장 함수
+  Future<void> addRecentSearch(String value) async {
+    if (value.isEmpty) return;
+
+    // 중복 값 확인해서 중복되면 기존 값 삭제해서 갱신
+    final existingIndex = recentSearchBox.values.toList().indexOf(value);
+    if (existingIndex != -1) {
+      await recentSearchBox.deleteAt(existingIndex);
+    }
+
+    // 최대 10개 유지
+    if (recentSearchBox.length >= 10) {
+      await recentSearchBox.deleteAt(0); // 가장 오래된 값 삭제
+    }
+
+    await recentSearchBox.add(value);
+
+    setState(() {
+      recentSearch = recentSearchBox.values.toList().reversed.toList();
+    });
   }
 }
