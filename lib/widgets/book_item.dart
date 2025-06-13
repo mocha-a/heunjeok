@@ -29,7 +29,7 @@ class BookItem extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset(image, width: 110, height: 146, fit: BoxFit.cover),
+            Image.network(image, width: 110, height: 146, fit: BoxFit.cover),
             SizedBox(width: 16),
             Expanded(
               child: Column(
