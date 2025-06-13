@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -30,51 +32,42 @@ class _MyWidgetState extends State<Book> {
   @override
   void initState() {
     super.initState();
-    // print("불러올 id: ${widget.id}");
-
-    // 실제 서버 호출로 변경하기
-    fetchBookAndReviews(1);
     widget.changePadding(18);
+    // 서버 호출
+    fetchAllReviews();
   }
 
-  void fetchBookAndReviews(int id) async {
-    // // 1. 책 정보 요청
-    // final fetchedBook = await getBookById(bookId);
-    // // 2. 리뷰 목록 요청
-    // final fetchedReviews = await getReviewsByBookId(bookId);
-    final List<Map<String, dynamic>> allReviews = [
-      {
-        "book_id": 1,
-        "nickname": "울먹거리는 쿼카",
-        "date": "2025-06-10",
-        "content": "너무 기뻐서 바로 구매했습니다.",
-        "rating": 2.5,
-      },
-      {
-        "book_id": 1,
-        "nickname": "조용한 고슴도치",
-        "date": "2025-04-24",
-        "content": "기분이 가라앉을 때 좋아요.",
-        "rating": 4.5,
-      },
-    ];
+  Future<void> fetchAllReviews() async {
+    final response = await http.get(
+      Uri.parse('http://localhost/heunjeok-server/bookreviews/all_get.php'),
+    );
 
-    final List<Map<String, dynamic>> foundBook = [
-      {
-        "id": 1,
-        "title": "클래식 좀 들어라",
-        "author": "망둥어,해달",
-        "edit": "더스퀘어",
-        "image": "assets/image.jpg",
-        "date": "2025.05.20",
-        "content":
-            "이제는 ‘클래식힙’ 트렌드!유튜브 인기채널 ‘클래식좀들어라’의 플레이리스트를 책으로 만나다이 책은 구독자들의 뜨거운 사랑을 받은 유튜브 채널 ‘클래식좀들어라’의 플레이리스트를 기반으로, 젊은감각으로 클래식 음악을 소개하는 신개념 입문서다. 흔히들 생각하는 클래식의 이미지처럼 점잖고 고상한스타일이 아닌, 톡톡 튀는 재미와 친근함으로 대중들에게 다가간다는 점이 특징이다.이런 분께 추천합니다!“클래식, 들어야 할 것 같긴 한데 뭐부터 들어야 할지 모르겠어요.”“뻔하고 지루한 교양서, 이제 그만!”“감성 충만한 플레이리스트로 하루를 채우고 싶어요.”“BGM으로만 듣던 클래식, 그 매력을 좀 더 알고 즐기고 싶어요.",
-      },
-    ];
-    setState(() {
-      book = foundBook;
-      reviews = allReviews.where((r) => r["book_id"] == id).toList();
-    });
+    if (response.statusCode == 200) {
+      final List data = json.decode(response.body);
+      print(response.body);
+
+      // 책별로 묶거나 전체 리뷰 표시 등 원하는대로 처리
+      setState(() {
+        reviews = data
+            .map(
+              (item) => {
+                "book_id": item["book_id"] ?? 0,
+                "book_title": item["book_title"] ?? '',
+                "book_author": item["book_author"] ?? '',
+                "book_publisher": item["book_publisher"] ?? '',
+                "book_cover": item["book_cover"] ?? '',
+                "nickname": item["nickname"] ?? '',
+                "content": item["content"] ?? '',
+                "rating": item["rating"] ?? 0,
+                "date": item["date"] ?? '',
+                "password": item["password"] ?? '',
+              },
+            )
+            .toList();
+      });
+    } else {
+      print("서버 응답 오류: ${response.statusCode}");
+    }
   }
 
   bool isLatestSort = true;
@@ -159,21 +152,21 @@ class _MyWidgetState extends State<Book> {
               itemCount: sortedReviews.length,
               itemBuilder: (context, idx) {
                 final review = sortedReviews[idx];
-                // 해당 리뷰의 책 이미지 가져오기
-                final matchedBook = book.firstWhere(
-                  (b) => b["id"] == review["book_id"],
-                  orElse: () => {},
-                );
+                // // 해당 리뷰의 책 이미지 가져오기
+                // final matchedBook = book.firstWhere(
+                //   (b) => b["id"] == review["book_id"],
+                //   orElse: () => {},
+                // );
                 return Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: BookItem(
-                    image: matchedBook["image"],
-                    nickname: review["nickname"],
-                    date: review["date"],
-                    content: review["content"],
+                    image: review["book_cover"] ?? '이미지 없음',
+                    nickname: review["nickname"] ?? '닉네임 없음',
+                    date: review["date"] ?? '날짜 없음',
+                    content: review["content"] ?? '내용 없음',
                     onTap: () {
-                      alertDialog(context, matchedBook, review);
-                      print('책 클릭 ID값 : ${matchedBook["id"]}');
+                      alertDialog(context, review);
+                      print('책 클릭 ID값 : ${review["id"]}');
                     },
                   ),
                 );
@@ -196,11 +189,7 @@ class _MyWidgetState extends State<Book> {
   }
 
   //클릭 시 기록 확인 팝업
-  void alertDialog(
-    ctx,
-    Map<String, dynamic> bookItem,
-    Map<String, dynamic> reviewItem,
-  ) {
+  void alertDialog(ctx, Map<String, dynamic> bookItem) {
     showDialog(
       context: ctx,
       builder: (context) {
@@ -219,42 +208,50 @@ class _MyWidgetState extends State<Book> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Image.asset(
-                      bookItem["image"],
+                    Image.network(
+                      bookItem["book_cover"],
                       width: 81,
                       height: 107,
                       fit: BoxFit.cover,
                     ),
                     SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          bookItem["title"],
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        SizedBox(height: 3),
-                        Row(
-                          children: [
-                            DefaultTextStyle(
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w300,
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(bookItem["edit"]),
-                                  Text(" / "),
-                                  Text(bookItem["author"]),
-                                ],
-                              ),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            bookItem["book_title"],
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
                             ),
-                          ],
-                        ),
-                      ],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 3),
+                          Row(
+                            children: [
+                              DefaultTextStyle(
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w300,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(bookItem["book_publisher"]),
+                                    Text(" / "),
+                                    Text(
+                                      bookItem["book_author"],
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -265,7 +262,7 @@ class _MyWidgetState extends State<Book> {
                     Row(
                       children: [
                         Text(
-                          reviewItem["nickname"],
+                          bookItem["nickname"],
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w300,
@@ -274,14 +271,14 @@ class _MyWidgetState extends State<Book> {
                         ),
                         Spacer(),
                         RatingBarIndicator(
-                          rating: reviewItem["rating"],
+                          rating: bookItem["rating"],
                           itemCount: 5,
                           itemSize: 20,
                           direction: Axis.horizontal,
                           itemBuilder: (context, index) {
-                            final fullStars = reviewItem["rating"].floor();
+                            final fullStars = bookItem["rating"].floor();
                             final hasHalfStar =
-                                (reviewItem["rating"] - fullStars) >= 0.5;
+                                (bookItem["rating"] - fullStars) >= 0.5;
 
                             if (index < fullStars) {
                               // 꽉 찬 별
@@ -320,7 +317,7 @@ class _MyWidgetState extends State<Book> {
 
                     SizedBox(height: 5),
                     Text(
-                      reviewItem["content"],
+                      bookItem["content"],
                       style: TextStyle(
                         fontSize: 14,
                         height: 1.3,
@@ -331,7 +328,7 @@ class _MyWidgetState extends State<Book> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        reviewItem["date"],
+                        bookItem["date"],
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w300,
@@ -357,7 +354,9 @@ class _MyWidgetState extends State<Book> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => Detail(id: bookItem["id"])),
+                  MaterialPageRoute(
+                    builder: (_) => Detail(id: int.parse(bookItem["book_id"])),
+                  ),
                 );
               },
               child: Text(

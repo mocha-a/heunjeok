@@ -1,4 +1,8 @@
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:heunjeok/widgets/cover_image.dart';
@@ -23,60 +27,61 @@ class Detail extends StatefulWidget {
 }
 
 class _MyWidgetState extends State<Detail> {
-  List<Map<String, dynamic>>? book; // 책 정보
+  Map<String, dynamic>? selectedBook;
   List<Map<String, dynamic>> reviews = []; // 리뷰 목록
 
   final formkey = GlobalKey<FormState>();
+  TextEditingController reviewController = TextEditingController();
+  String? editingName;
 
+  String? nickname;
+  String? password;
+  String? content;
   double rating = 2.5; // 기록내용 작성 시 열리는 팝업 초기 별점 값
 
   @override
   void initState() {
     super.initState();
     print("불러올 id: ${widget.id}");
-
+    recommend();
+    loadReviews();
     // 실제 서버 호출로 변경하기
-    fetchBookAndReviews(widget.id);
+    // fetchBookAndReviews(widget.id);
   }
 
-  void fetchBookAndReviews(int id) async {
-    // // 1. 책 정보 요청
-    // final fetchedBook = await getBookById(bookId);
-    // // 2. 리뷰 목록 요청
-    // final fetchedReviews = await getReviewsByBookId(bookId);
-    final List<Map<String, dynamic>> allReviews = [
-      {
-        "book_id": 1,
-        "nickname": "울먹거리는 쿼카",
-        "date": "2025-06-10",
-        "content": "너무 기뻐서 바로 구매했습니다.",
-        "rating": 2.5,
-      },
-      {
-        "book_id": 1,
-        "nickname": "조용한 고슴도치",
-        "date": "2025-04-24",
-        "content": "기분이 가라앉을 때 좋아요.",
-        "rating": 4.5,
-      },
-    ];
+  Future<void> recommend() async {
+    String jsonString = await rootBundle.loadString('bbbbb.json');
+    List<dynamic> jsonData = json.decode(jsonString);
+    final found = jsonData.firstWhere(
+      (item) => item['itemId'] == widget.id,
+      orElse: () => null,
+    );
 
-    final List<Map<String, dynamic>> foundBook = [
-      {
-        "id": 1,
-        "title": "클래식 좀 들어라",
-        "author": "망둥어,해달",
-        "edit": "더스퀘어",
-        "image": "assets/image.jpg",
-        "date": "2025.05.20",
-        "content":
-            "이제는 ‘클래식힙’ 트렌드!유튜브 인기채널 ‘클래식좀들어라’의 플레이리스트를 책으로 만나다이 책은 구독자들의 뜨거운 사랑을 받은 유튜브 채널 ‘클래식좀들어라’의 플레이리스트를 기반으로, 젊은감각으로 클래식 음악을 소개하는 신개념 입문서다. 흔히들 생각하는 클래식의 이미지처럼 점잖고 고상한스타일이 아닌, 톡톡 튀는 재미와 친근함으로 대중들에게 다가간다는 점이 특징이다.이런 분께 추천합니다!“클래식, 들어야 할 것 같긴 한데 뭐부터 들어야 할지 모르겠어요.”“뻔하고 지루한 교양서, 이제 그만!”“감성 충만한 플레이리스트로 하루를 채우고 싶어요.”“BGM으로만 듣던 클래식, 그 매력을 좀 더 알고 즐기고 싶어요.",
-      },
-    ];
-    setState(() {
-      book = foundBook;
-      reviews = allReviews.where((r) => r["book_id"] == id).toList();
-    });
+    if (found != null) {
+      setState(() {
+        selectedBook = found;
+      });
+    } else {
+      print('해당 ID의 책을 찾을 수 없습니다.');
+    }
+  }
+
+  Future<void> loadReviews() async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'http://localhost/heunjeok-server/bookreviews/review_get.php?bookId=${widget.id}',
+        ),
+      );
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        setState(() {
+          reviews = data.map((e) => Map<String, dynamic>.from(e)).toList();
+        });
+      }
+    } catch (e) {
+      print('Error fetching reviews: $e');
+    }
   }
 
   @override
@@ -100,7 +105,7 @@ class _MyWidgetState extends State<Detail> {
             icon: SvgPicture.asset('back.svg', width: 18),
           ),
         ),
-        body: book == null
+        body: selectedBook == null
             ? Center(
                 child: Image.asset(
                   'loading_green.gif',
@@ -115,7 +120,10 @@ class _MyWidgetState extends State<Detail> {
                     Stack(
                       clipBehavior: Clip.none, // 음수 위치도 허용
                       children: [
-                        CoverImage(imagePath: book![0]['image'], height: 470),
+                        CoverImage(
+                          imagePath: selectedBook!['cover'],
+                          height: 470,
+                        ),
                       ],
                     ),
                     Transform.translate(
@@ -138,7 +146,7 @@ class _MyWidgetState extends State<Detail> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "${book![0]['title']}",
+                                    "${selectedBook!['title']}",
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w600,
@@ -146,12 +154,12 @@ class _MyWidgetState extends State<Detail> {
                                   ),
                                   SizedBox(height: 10),
                                   Text(
-                                    "${book![0]['content']}",
+                                    "${selectedBook!['description']}",
                                     style: TextStyle(fontSize: 14),
                                   ),
                                   SizedBox(height: 10),
                                   Text(
-                                    "${book![0]['edit']!} / ${book![0]['author']}",
+                                    "${selectedBook!['publisher']} / ${selectedBook!['author']}",
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
@@ -159,7 +167,7 @@ class _MyWidgetState extends State<Detail> {
                                   ),
                                   SizedBox(height: 10),
                                   Text(
-                                    "${book![0]['date']}",
+                                    "${selectedBook!['pubDate']}",
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Color.fromARGB(255, 85, 85, 85),
@@ -198,7 +206,19 @@ class _MyWidgetState extends State<Detail> {
                                             ),
                                             Spacer(),
                                             TextButton(
-                                              onPressed: () {},
+                                              onPressed: () {
+                                                passwordAlertDialog((pw) {
+                                                  setState(() {
+                                                    reviewController.text =
+                                                        review["content"];
+                                                    editingName =
+                                                        review["nickname"];
+                                                  });
+                                                }, review["password"]);
+                                                print(
+                                                  "비밀번호 확인용: ${review["password"]}",
+                                                );
+                                              },
                                               style: ButtonStyle(
                                                 padding:
                                                     MaterialStateProperty.all(
@@ -233,7 +253,21 @@ class _MyWidgetState extends State<Detail> {
                                             ),
                                             SizedBox(width: 7),
                                             TextButton(
-                                              onPressed: () {},
+                                              onPressed: () {
+                                                passwordAlertDialog((pw) {
+                                                  if (pw ==
+                                                      review["password"]) {
+                                                    deleteAlertDialog(
+                                                      context,
+                                                      () {
+                                                        deleteReview(
+                                                          review["review_id"],
+                                                        );
+                                                      },
+                                                    );
+                                                  }
+                                                }, review["password"]);
+                                              },
                                               style: ButtonStyle(
                                                 padding:
                                                     MaterialStateProperty.all(
@@ -392,8 +426,31 @@ class _MyWidgetState extends State<Detail> {
                                   }).toList(),
                                   SizedBox(height: 30),
                                   ElevatedButton(
-                                    onPressed: () {
-                                      addForm(context);
+                                    onPressed: () async {
+                                      final scaffoldContext = context;
+                                      final result = await addForm(
+                                        context,
+                                      ); // 팝업 위젯
+
+                                      if (result == 'success') {
+                                        // // 팝업 닫힌 뒤 실행돼야 SnackBar가 잘 보임
+                                        // ScaffoldMessenger.of(
+                                        //   context,
+                                        // ).showSnackBar(
+                                        //   SnackBar(
+                                        //     content: Text('기록 내용이 저장되었습니다.'),
+                                        //     backgroundColor: Color.fromARGB(
+                                        //       255,
+                                        //       242,
+                                        //       151,
+                                        //       160,
+                                        //     ),
+                                        //     delaye: Duration(seconds: 2),
+                                        //   ),
+                                        // );
+
+                                        await loadReviews(); // 리뷰 다시 불러오기
+                                      }
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Color.fromARGB(
@@ -431,11 +488,11 @@ class _MyWidgetState extends State<Detail> {
   }
 
   //기록내용 추가 팝업
-  void addForm(context) {
-    showModalBottomSheet(
-      backgroundColor: Colors.white,
+  Future<String?> addForm(context) {
+    return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
@@ -481,7 +538,7 @@ class _MyWidgetState extends State<Detail> {
                           },
                           decoration: InputDecoration(labelText: '닉네임'),
                           onSaved: (value) {
-                            // schedule = value;
+                            nickname = value;
                           },
                         ),
                         SizedBox(height: 16),
@@ -495,7 +552,7 @@ class _MyWidgetState extends State<Detail> {
                           maxLines: 5,
                           decoration: InputDecoration(labelText: '기록내용'),
                           onSaved: (value) {
-                            // daytime = value;
+                            content = value;
                           },
                         ),
                         SizedBox(height: 16),
@@ -508,7 +565,7 @@ class _MyWidgetState extends State<Detail> {
                           },
                           decoration: InputDecoration(labelText: '비밀번호'),
                           onSaved: (value) {
-                            // memo = value;
+                            password = value;
                           },
                         ),
                         SizedBox(height: 30),
@@ -523,29 +580,35 @@ class _MyWidgetState extends State<Detail> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             if (formkey.currentState!.validate()) {
                               formkey.currentState!.save();
-                              //느낌표는 save라는 매소드가 나중에라도 틀림없이 존재한다 라는 의미를 가지고 있음
-                              // controller.addSchedule(
-                              //   schedule!,
-                              //   daytime,
-                              //   memo,
-                              //   selectedCategory!,
-                              //   selectedImportant!,
-                              // ); //느낌표가 무조건 string임을 의미
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('기록 내용이 저장되었습니다.'),
-                                  backgroundColor: Color.fromARGB(
-                                    255,
-                                    242,
-                                    151,
-                                    160,
-                                  ),
+
+                              // 서버로 POST 요청 보내기
+                              final response = await http.post(
+                                Uri.parse(
+                                  "http://localhost/heunjeok-server/bookreviews/insert.php",
                                 ),
+                                body: {
+                                  'book_id': selectedBook!['itemId'].toString(),
+                                  'book_cover': selectedBook!['cover'],
+                                  'book_title': selectedBook!['title'],
+                                  'book_author': selectedBook!['author'],
+                                  'book_publisher': selectedBook!['publisher'],
+                                  'book_pubDate': selectedBook!['pubDate'],
+                                  'rev_nickname': nickname!,
+                                  'rev_password': password!,
+                                  'rev_content': content!,
+                                  'rev_rating': rating.toString(),
+                                },
                               );
-                              Navigator.pop(context);
+
+                              if (response.statusCode == 200) {
+                                final result = json.decode(response.body);
+                                if (result['result'] == 'success') {
+                                  Navigator.pop(context, 'success');
+                                }
+                              }
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -583,5 +646,91 @@ class _MyWidgetState extends State<Detail> {
         );
       },
     );
+  }
+
+  //흔적 비밀번호 팝업
+  void passwordAlertDialog(
+    Function(String) onConfirmed,
+    String correctPassword,
+  ) {
+    final TextEditingController pwController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (_) {
+        String enteredPassword = '';
+        String? errorMessage;
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          title: Text('비밀번호를 입력해주세요.'),
+          content: TextField(
+            controller: pwController,
+            obscureText: true,
+            decoration: InputDecoration(hintText: '흔적 남길 때, 작성한 비밀번호를 입력해주세요'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                if (enteredPassword == correctPassword) {
+                  Navigator.pop(context);
+                  onConfirmed(enteredPassword);
+                } else {
+                  setState(() {
+                    errorMessage = '비밀번호가 일치하지 않습니다.';
+                  });
+                }
+              },
+              child: Text('확인'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('취소'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  //흔적 삭제 팝업
+  void deleteAlertDialog(BuildContext context, VoidCallback onConfirm) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          content: Text('삭제하시겠습니까?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                onConfirm();
+                Navigator.pop(context);
+              },
+              child: Text('확인'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('취소'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  //흔적 삭제 함수
+  void deleteReview(String reviewId) {
+    setState(() {
+      reviews.removeWhere((review) => review['review_id'] == reviewId);
+    });
   }
 }
