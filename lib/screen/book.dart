@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:heunjeok/utils/scroll_listener.dart';
 import 'package:heunjeok/widgets/dialog.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
@@ -16,45 +17,95 @@ class Book extends StatefulWidget {
 class _MyWidgetState extends State<Book> {
   List<Map<String, dynamic>> book = []; // 책 정보
   List<Map<String, dynamic>> reviews = []; // 리뷰 목록
+  late final ScrollController _scrollController;
+
+  int totalResults = 0;
+  int currentPage = 1;
+  bool isLoading = false;
+  bool hasMore = true;
 
   @override
   void initState() {
     super.initState();
     widget.changePadding(18);
-    // 서버 호출
-    fetchAllReviews();
+
+    // 스크롤 리스너 연결
+    _scrollController = scroll(
+      onReachBottom: () async {
+        if (!isLoading && hasMore) {
+          setState(() => isLoading = true);
+
+          final nextPage = currentPage + 1;
+          final newReviews = await fetchAllReviews(nextPage);
+
+          if (newReviews.isNotEmpty) {
+            setState(() {
+              reviews.addAll(newReviews);
+              currentPage = nextPage;
+            });
+          } else {
+            setState(() => hasMore = false);
+          }
+
+          setState(() => isLoading = false);
+        }
+      },
+    );
+
+    // 최초 데이터 로드
+    fetchAllReviews(1).then((newReviews) {
+      setState(() {
+        reviews = newReviews;
+        currentPage = 1;
+        hasMore = true;
+      });
+    });
   }
 
-  Future<void> fetchAllReviews() async {
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchAllReviews(int page) async {
     final response = await http.get(
-      Uri.parse('http://localhost/heunjeok-server/bookreviews/all_get.php'),
+      Uri.parse(
+        'http://localhost/heunjeok-server/bookreviews/all_get.php?page=$page',
+      ),
     );
 
     if (response.statusCode == 200) {
-      final List data = json.decode(response.body);
-      print(response.body);
+      final Map<String, dynamic> json = jsonDecode(response.body);
+
+      //총 개수
+      // 총 개수는 최초 한 번만 설정해도 됨
+      if (page == 1) {
+        totalResults = json['total'];
+      }
+
+      final List<dynamic> data = json['reviews'];
 
       // 책별로 묶거나 전체 리뷰 표시 등 원하는대로 처리
-      setState(() {
-        reviews = data
-            .map(
-              (item) => {
-                "book_id": item["book_id"] ?? 0,
-                "book_title": item["book_title"] ?? '',
-                "book_author": item["book_author"] ?? '',
-                "book_publisher": item["book_publisher"] ?? '',
-                "book_cover": item["book_cover"] ?? '',
-                "nickname": item["nickname"] ?? '',
-                "content": item["content"] ?? '',
-                "rating": item["rating"] ?? 0,
-                "date": item["date"] ?? '',
-                "password": item["password"] ?? '',
-              },
-            )
-            .toList();
-      });
+      return data
+          .map<Map<String, dynamic>>(
+            (item) => {
+              "book_id": item["book_id"] ?? 0,
+              "book_title": item["book_title"] ?? '',
+              "book_author": item["book_author"] ?? '',
+              "book_publisher": item["book_publisher"] ?? '',
+              "book_cover": item["book_cover"] ?? '',
+              "nickname": item["nickname"] ?? '',
+              "content": item["content"] ?? '',
+              "rating": item["rating"] ?? 0,
+              "date": item["date"] ?? '',
+              "password": item["password"] ?? '',
+            },
+          )
+          .toList();
     } else {
       print("서버 응답 오류: ${response.statusCode}");
+      return [];
     }
   }
 
@@ -63,7 +114,6 @@ class _MyWidgetState extends State<Book> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> sortedReviews = List.from(reviews);
-
     if (isLatestSort) {
       sortedReviews.sort((a, b) => b["date"].compareTo(a["date"]));
     } else {
@@ -80,7 +130,7 @@ class _MyWidgetState extends State<Book> {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: "${reviews.length}",
+                      text: "$totalResults",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -137,6 +187,7 @@ class _MyWidgetState extends State<Book> {
           SizedBox(height: 16),
           Expanded(
             child: ListView.builder(
+              controller: _scrollController,
               itemCount: sortedReviews.length,
               itemBuilder: (context, idx) {
                 final review = sortedReviews[idx];
@@ -153,8 +204,12 @@ class _MyWidgetState extends State<Book> {
                     date: review["date"] ?? '날짜 없음',
                     content: review["content"] ?? '내용 없음',
                     onTap: () {
-                      alertDialog(context, review, fetchAllReviews);
-                      print('책 클릭 ID값 : ${review["id"]}');
+                      alertDialog(context, review, () async {
+                        final newReviews = await fetchAllReviews(1);
+                        setState(() {
+                          sortedReviews = newReviews;
+                        });
+                      });
                     },
                   ),
                 );
@@ -180,7 +235,7 @@ class _MyWidgetState extends State<Book> {
   void alertDialog(
     BuildContext context,
     Map<String, dynamic> bookItem,
-    VoidCallback refreshCallback,
+    Future<void> Function() refreshCallback,
   ) async {
     final result = await showDialog(
       context: context,
@@ -188,7 +243,7 @@ class _MyWidgetState extends State<Book> {
           ReviewDialog(bookItem: bookItem, onReturn: refreshCallback),
     );
     if (result == true) {
-      refreshCallback();
+      await refreshCallback();
     }
   }
 }

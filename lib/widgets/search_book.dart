@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:heunjeok/controller/book_controller.dart';
 import 'package:heunjeok/screen/detail.dart';
+import 'package:heunjeok/utils/scroll_listener.dart';
 
 class SearchBook extends StatefulWidget {
   const SearchBook({super.key});
@@ -16,22 +17,21 @@ class _SearchBookState extends State<SearchBook> {
   final BookController bookController = Get.find<BookController>();
 
   //스크롤
-  final ScrollController _scrollController = ScrollController();
+  ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
 
     // 스크롤 리스너 등록
-    _scrollController.addListener(() {
-      if (_scrollController.position.pixels >=
-          _scrollController.position.maxScrollExtent - 200) {
+    _scrollController = scroll(
+      onReachBottom: () {
         final query = bookController.currentQuery.value;
         if (query.isNotEmpty) {
           bookController.search(query, isLoadMore: true);
         }
-      }
-    });
+      },
+    );
   }
 
   @override

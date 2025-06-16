@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -20,6 +21,28 @@ class _MyWidgetState extends State<Detail> {
 
   final formkey = GlobalKey<FormState>();
   TextEditingController reviewController = TextEditingController();
+
+  //비밀번호 입력값 제어용
+  final TextEditingController passwordController = TextEditingController();
+
+  //닉네임 입력값 제어용
+  final TextEditingController nicknameController = TextEditingController();
+
+  //내용 입력값 제어용
+  final TextEditingController contentController = TextEditingController();
+
+  //닉네임 포커스 감지용
+  final FocusNode nicknameFocusNode = FocusNode();
+
+  //비밀번호 포커스 감지용
+  final FocusNode passwordFocusNode = FocusNode();
+
+  //비밀번호 보이게/안보이게 제어용
+  bool obscureText = true;
+  //닉네임 중복 유무
+  bool nicknameAvailable = true;
+  String? nicknameErrorText;
+
   String? editingName;
 
   String? nickname;
@@ -29,9 +52,26 @@ class _MyWidgetState extends State<Detail> {
   @override
   void initState() {
     super.initState();
-    print("불러올 id: ${widget.id}");
+    // print("불러올 id: ${widget.id}");
     itemIDApi(widget.id);
     loadReviews();
+
+    passwordFocusNode.addListener(() {
+      if (!passwordFocusNode.hasFocus) {
+        // 포커스를 잃었을 때 유효성 검사 실행
+        formkey.currentState!.validate();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    reviewController.dispose();
+    passwordController.dispose();
+    passwordFocusNode.dispose();
+    nicknameController.dispose();
+    nicknameFocusNode.dispose();
+    super.dispose();
   }
 
   //itmeId 값으로 책 정보 가져오기
@@ -54,7 +94,7 @@ class _MyWidgetState extends State<Detail> {
       );
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
-        print("받아온 리뷰 데이터: $data");
+        // print("받아온 리뷰 데이터: $data");
         setState(() {
           reviews = data.map((e) => Map<String, dynamic>.from(e)).toList();
         });
@@ -501,17 +541,12 @@ class _MyWidgetState extends State<Detail> {
     bool isEdit = false,
     int? reviewId,
   }) {
-    final TextEditingController nicknameController = TextEditingController(
-      text: initialNickname ?? '',
-    );
-    final TextEditingController contentController = TextEditingController(
-      text: initialContent ?? '',
-    );
-    final TextEditingController passwordController = TextEditingController(
-      text: initialPassword ?? '',
-    );
-
     double rating = initialRating;
+
+    // 초기값 설정
+    nicknameController.text = initialNickname ?? '';
+    contentController.text = initialContent ?? '';
+    passwordController.text = initialPassword ?? '';
 
     return showModalBottomSheet<String>(
       context: context,
@@ -520,6 +555,20 @@ class _MyWidgetState extends State<Detail> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
+            // nicknameFocusNode에 리스너 붙이기
+            nicknameFocusNode.addListener(() async {
+              if (!nicknameFocusNode.hasFocus) {
+                final nickname = nicknameController.text.trim();
+                if (nickname.isNotEmpty) {
+                  final available = await checkNickname(nickname);
+                  setModalState(() {
+                    nicknameAvailable = available;
+                    nicknameErrorText = available ? null : "이미 사용 중인 닉네임이에요.";
+                  });
+                }
+              }
+            });
+
             return Container(
               padding: EdgeInsets.symmetric(horizontal: 30, vertical: 24),
               child: Column(
@@ -557,13 +606,17 @@ class _MyWidgetState extends State<Detail> {
                         SizedBox(height: 16),
                         TextFormField(
                           controller: nicknameController,
+                          focusNode: nicknameFocusNode,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return "닉네임을 입력해 주세요!";
                             }
                             return null;
                           },
-                          decoration: InputDecoration(labelText: '닉네임'),
+                          decoration: InputDecoration(
+                            labelText: '닉네임',
+                            errorText: nicknameErrorText,
+                          ),
                           onSaved: (value) {
                             nickname = value;
                           },
@@ -585,14 +638,41 @@ class _MyWidgetState extends State<Detail> {
                         ),
                         SizedBox(height: 16),
                         TextFormField(
+                          obscureText: obscureText,
                           controller: passwordController,
+                          focusNode: passwordFocusNode,
+                          keyboardType: TextInputType.text,
+                          // inputFormatters: [
+                          //   //조건이 맞지 않으면 입력 차단
+                          //   FilteringTextInputFormatter.allow(
+                          //     //입력 가능한 패턴을 받아서 가능한 패턴만 허용
+                          //     RegExp(r'[a-zA-Z0-9!@#\$%^&*]'), //정규식 만드는 곳
+                          //   ),
+                          // ],
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return "비밀번호를 입력해 주세요!";
                             }
+                            if (!validationPassword(value)) {
+                              return "🔒 영문, 숫자, 특수문자가 모두 포함된 6자 이상의 비밀번호를 입력해 주세요!";
+                            }
                             return null;
                           },
-                          decoration: InputDecoration(labelText: '비밀번호'),
+                          decoration: InputDecoration(
+                            labelText: '비밀번호',
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                obscureText
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                              ),
+                              onPressed: () {
+                                setModalState(() {
+                                  obscureText = !obscureText;
+                                });
+                              },
+                            ),
+                          ),
                           onSaved: (value) {
                             password = value;
                           },
@@ -611,17 +691,6 @@ class _MyWidgetState extends State<Detail> {
                         ElevatedButton(
                           onPressed: () async {
                             if (formkey.currentState!.validate()) {
-                              if (isEdit &&
-                                  (reviewId == null || reviewId == 0)) {
-                                print("잘못된 reviewId: $reviewId");
-                                return;
-                              }
-
-                              // formkey.currentState!.save();
-                              final passwordValue = passwordController.text;
-                              final nicknameValue = nicknameController.text;
-                              final contentValue = contentController.text;
-
                               final body = isEdit
                                   ? {
                                       'review_id': reviewId.toString(),
@@ -646,12 +715,6 @@ class _MyWidgetState extends State<Detail> {
                                       'rev_rating': rating.toString(),
                                     };
 
-                              if (isEdit &&
-                                  (reviewId == null || reviewId == 0)) {
-                                print("수정 요청인데 reviewId가 없습니다.");
-                                return;
-                              }
-
                               final response = await http.post(
                                 Uri.parse(
                                   isEdit
@@ -662,12 +725,17 @@ class _MyWidgetState extends State<Detail> {
                               );
 
                               if (response.statusCode == 200) {
-                                final responseBody = utf8.decode(
-                                  response.bodyBytes,
+                                final result = json.decode(
+                                  utf8.decode(response.bodyBytes),
                                 );
-                                final result = json.decode(responseBody);
-                                print("서버 응답: $result");
                                 if (result['success'] == true) {
+                                  // 저장 후 입력 내용 초기화
+                                  nicknameController.clear();
+                                  passwordController.clear();
+                                  contentController.clear();
+                                  rating = 0;
+                                  nicknameAvailable = false;
+                                  nicknameErrorText = null;
                                   Navigator.pop(context, 'success'); // 팝업 닫기
                                 } else {
                                   print(
@@ -677,8 +745,6 @@ class _MyWidgetState extends State<Detail> {
                               } else {
                                 print("서버 요청 실패: ${response.statusCode}");
                               }
-                              print(response.body.runtimeType); // 타입 확인
-                              print(response.body); // 실제 값
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -693,6 +759,13 @@ class _MyWidgetState extends State<Detail> {
                         SizedBox(width: 16),
                         ElevatedButton(
                           onPressed: () {
+                            // 취소 클릭 시 입력 내용 초기화
+                            nicknameController.clear();
+                            passwordController.clear();
+                            contentController.clear();
+                            rating = 0;
+                            nicknameAvailable = false;
+                            nicknameErrorText = null;
                             Navigator.of(context).pop();
                           },
                           style: ElevatedButton.styleFrom(
@@ -736,7 +809,7 @@ class _MyWidgetState extends State<Detail> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
-              title: Text('비밀번호를 입력해주세요.'),
+              title: Text('비밀번호를 입력해주세요.', style: TextStyle(fontSize: 16)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -745,6 +818,10 @@ class _MyWidgetState extends State<Detail> {
                     obscureText: true,
                     decoration: InputDecoration(
                       hintText: '흔적 남길 때 작성한 비밀번호를 입력해주세요',
+                      hintStyle: TextStyle(
+                        fontSize: 12,
+                        color: Color.fromARGB(255, 85, 85, 85),
+                      ),
                       errorText: errorMessage,
                     ),
                   ),
@@ -791,7 +868,7 @@ class _MyWidgetState extends State<Detail> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          content: Text('삭제하시겠습니까?'),
+          content: Text('삭제하시겠습니까?', style: TextStyle(fontSize: 16)),
           actions: [
             TextButton(
               onPressed: () {
@@ -856,5 +933,34 @@ class _MyWidgetState extends State<Detail> {
 
     final data = json.decode(response.body);
     return data['success'] == true;
+  }
+
+  // 비밀번호 유효성 검사
+  bool validationPassword(String password) {
+    final regex = RegExp(
+      r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\$%^&*])[A-Za-z\d!@#\$%^&*]{6,}$',
+    ); //
+    return regex.hasMatch(password); //검사
+  }
+
+  // 닉네임 중복 검사
+  Future<bool> checkNickname(String nickname) async {
+    final url = Uri.parse(
+      'http://localhost/heunjeok-server/bookreviews/check_nickname.php',
+    );
+
+    final response = await http.post(url, body: {'rev_nickname': nickname});
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      // 서버 응답 => {result: available}(가능), {result: duplicate}(중복)
+      if (data['result'] == 'available') {
+        return true; //사용 가능
+      } else if (data['result'] == 'duplicate') {
+        //
+        return false; //중복
+      }
+    }
+    throw Exception('닉네임 중복 체크 실패');
   }
 }
