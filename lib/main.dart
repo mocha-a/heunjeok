@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -18,6 +19,14 @@ void main() async {
   runApp(const MyApp());
 }
 
+class MyCustomScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+  };
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -30,11 +39,14 @@ class MyApp extends StatelessWidget {
           bodyMedium: TextStyle(color: Color.fromRGBO(51, 51, 51, 1)),
         ),
         fontFamily: 'SUITE',
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.transparent),
-        appBarTheme: AppBarTheme(backgroundColor: Colors.transparent),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+        ),
         scaffoldBackgroundColor: Colors.white,
       ),
-
+      scrollBehavior: MyCustomScrollBehavior(),
       // home: const MyHomePage(title: '흔적'),
       home: const SplashScreen(),
     );
@@ -63,7 +75,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Image.asset('splash.png')));
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(child: Image.asset('splash.png')),
+    );
   }
 }
 
@@ -128,6 +143,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         centerTitle: true,
         backgroundColor: Colors.white,
+        elevation: 0,
       ),
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: padding),

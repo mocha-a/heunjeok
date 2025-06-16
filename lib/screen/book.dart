@@ -120,114 +120,117 @@ class _MyWidgetState extends State<Book> {
       sortedReviews.sort((a, b) => b["rating"].compareTo(a["rating"]));
     }
 
-    return Column(
-      children: [
-        SizedBox(height: 25),
-        if (reviews.isNotEmpty) ...[
-          Row(
-            children: [
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: "$totalResults",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Color.fromARGB(255, 242, 151, 160),
-                      ),
-                    ),
-                    TextSpan(
-                      text: "개의 독서기록이 있습니다!",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Color.fromARGB(255, 67, 103, 65),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Spacer(),
-              TextButton(
-                style: ButtonStyle(
-                  overlayColor: MaterialStateProperty.resolveWith<Color?>((
-                    Set<MaterialState> states,
-                  ) {
-                    if (states.contains(MaterialState.hovered)) {
-                      return Color.fromARGB(50, 182, 187, 121);
-                    }
-                    if (states.contains(MaterialState.pressed)) {
-                      return Color.fromARGB(100, 182, 187, 121);
-                    }
-                    return null; // 기본값
-                  }),
-                ),
-                onPressed: () {
-                  setState(() {
-                    isLatestSort = !isLatestSort;
-                  });
-                },
-                child: Row(
-                  children: [
-                    Text(
-                      isLatestSort ? "최신순" : "별점순",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color.fromARGB(255, 51, 51, 51),
-                      ),
-                    ),
-                    SizedBox(width: 6),
-                    SvgPicture.asset("recycle.svg"),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              itemCount: sortedReviews.length,
-              itemBuilder: (context, idx) {
-                final review = sortedReviews[idx];
-                // // 해당 리뷰의 책 이미지 가져오기
-                // final matchedBook = book.firstWhere(
-                //   (b) => b["id"] == review["book_id"],
-                //   orElse: () => {},
-                // );
-                return Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: BookItem(
-                    image: review["book_cover"] ?? '이미지 없음',
-                    nickname: review["nickname"] ?? '닉네임 없음',
-                    date: review["date"] ?? '날짜 없음',
-                    content: review["content"] ?? '내용 없음',
-                    onTap: () {
-                      alertDialog(context, review, () async {
-                        final newReviews = await fetchAllReviews(1);
-                        setState(() {
-                          sortedReviews = newReviews;
-                        });
-                      });
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-        ] else ...[
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: [
+          SizedBox(height: 25),
+          if (reviews.isNotEmpty) ...[
+            Row(
               children: [
-                SizedBox(height: 150),
-                Image.asset('nolist.png', width: 176),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: "$totalResults",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Color.fromARGB(255, 242, 151, 160),
+                        ),
+                      ),
+                      TextSpan(
+                        text: "개의 독서기록이 있습니다!",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Color.fromARGB(255, 67, 103, 65),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Spacer(),
+                TextButton(
+                  style: ButtonStyle(
+                    overlayColor: MaterialStateProperty.resolveWith<Color?>((
+                      Set<MaterialState> states,
+                    ) {
+                      if (states.contains(MaterialState.hovered)) {
+                        return Color.fromARGB(50, 182, 187, 121);
+                      }
+                      if (states.contains(MaterialState.pressed)) {
+                        return Color.fromARGB(100, 182, 187, 121);
+                      }
+                      return null; // 기본값
+                    }),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      isLatestSort = !isLatestSort;
+                    });
+                  },
+                  child: Row(
+                    children: [
+                      Text(
+                        isLatestSort ? "최신순" : "별점순",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color.fromARGB(255, 51, 51, 51),
+                        ),
+                      ),
+                      SizedBox(width: 6),
+                      SvgPicture.asset("recycle.svg"),
+                    ],
+                  ),
+                ),
               ],
             ),
-          ),
+            SizedBox(height: 16),
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                itemCount: sortedReviews.length,
+                itemBuilder: (context, idx) {
+                  final review = sortedReviews[idx];
+                  // // 해당 리뷰의 책 이미지 가져오기
+                  // final matchedBook = book.firstWhere(
+                  //   (b) => b["id"] == review["book_id"],
+                  //   orElse: () => {},
+                  // );
+                  return Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: BookItem(
+                      image: review["book_cover"] ?? '이미지 없음',
+                      nickname: review["nickname"] ?? '닉네임 없음',
+                      date: review["date"] ?? '날짜 없음',
+                      content: review["content"] ?? '내용 없음',
+                      onTap: () {
+                        alertDialog(context, review, () async {
+                          final newReviews = await fetchAllReviews(1);
+                          setState(() {
+                            sortedReviews = newReviews;
+                          });
+                        });
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ] else ...[
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(height: 150),
+                  Image.asset('nolist.png', width: 176),
+                ],
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 

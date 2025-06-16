@@ -100,371 +100,385 @@ class _MyWidgetState extends State<Home> {
     }
 
     if (isLoading) {
-      return Center(child: Image.asset('/loading_green.gif'));
+      return Center(
+        child: Image.asset('/loading_green.gif', width: 316, height: 316),
+      );
     }
 
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: 700,
-            child: CardSwiper(
-              cardsCount: recommend.length,
-              numberOfCardsDisplayed: 2,
-              allowedSwipeDirection: AllowedSwipeDirection.only(
-                left: true,
-                right: true,
-              ),
-              cardBuilder:
-                  (
-                    context,
-                    index,
-                    horizontalOffsetPercentage,
-                    verticalOffsetPercentage,
-                  ) {
-                    var item = recommend[index];
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => Detail(id: item["itemId"]),
+    return Container(
+      color: Colors.white,
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 700,
+              child: CardSwiper(
+                cardsCount: recommend.length,
+                numberOfCardsDisplayed: 2,
+                allowedSwipeDirection: AllowedSwipeDirection.only(
+                  left: true,
+                  right: true,
+                ),
+                cardBuilder:
+                    (
+                      context,
+                      index,
+                      horizontalOffsetPercentage,
+                      verticalOffsetPercentage,
+                    ) {
+                      var item = recommend[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => Detail(id: item["itemId"]),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: const Color.fromRGBO(
+                              239,
+                              239,
+                              239,
+                              1,
+                            ), // 하단 배경색
                           ),
-                        );
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: const Color.fromRGBO(
-                            239,
-                            239,
-                            239,
-                            1,
-                          ), // 하단 배경색
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Column(
-                          children: [
-                            CoverImage(imagePath: item['cover']!),
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                  top: 25,
-                                  left: 20,
-                                  bottom: 30,
-                                  right: 20,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item['title']!,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 18,
+                          clipBehavior: Clip.antiAlias,
+                          child: Column(
+                            children: [
+                              CoverImage(imagePath: item['cover']!),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 25,
+                                    left: 20,
+                                    bottom: 30,
+                                    right: 20,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item['title']!,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 18,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    RichText(
-                                      text: TextSpan(
+                                      const SizedBox(height: 10),
+                                      RichText(
+                                        text: TextSpan(
+                                          children: [
+                                            TextSpan(
+                                              text: item['author']!,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w300,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            const TextSpan(
+                                              text: ' · ',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w300,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text: item['publisher']!,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w300,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                          style: DefaultTextStyle.of(
+                                            context,
+                                          ).style, // 기본 텍스트 스타일 상속
+                                        ),
+                                      ),
+                                      const SizedBox(height: 15),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.baseline,
+                                        textBaseline: TextBaseline.alphabetic,
                                         children: [
-                                          TextSpan(
-                                            text: item['author']!,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w300,
-                                              fontSize: 12,
+                                          Baseline(
+                                            baseline: 12,
+                                            baselineType:
+                                                TextBaseline.alphabetic,
+                                            child: SvgPicture.asset(
+                                              'assets/quotes_01.svg',
+                                              width: 16,
+                                              height: 16,
                                             ),
                                           ),
-                                          const TextSpan(
-                                            text: ' · ',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w300,
-                                              fontSize: 12,
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              item['description']!,
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                              ),
+                                              maxLines: 5,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          TextSpan(
-                                            text: item['publisher']!,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w300,
-                                              fontSize: 12,
+                                          const SizedBox(width: 10),
+                                          Baseline(
+                                            baseline: 115,
+                                            baselineType:
+                                                TextBaseline.alphabetic,
+                                            child: SvgPicture.asset(
+                                              'assets/quotes_02.svg',
+                                              width: 16,
+                                              height: 16,
                                             ),
                                           ),
                                         ],
-                                        style: DefaultTextStyle.of(
-                                          context,
-                                        ).style, // 기본 텍스트 스타일 상속
                                       ),
-                                    ),
-                                    const SizedBox(height: 15),
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.baseline,
-                                      textBaseline: TextBaseline.alphabetic,
-                                      children: [
-                                        Baseline(
-                                          baseline: 12,
-                                          baselineType: TextBaseline.alphabetic,
-                                          child: SvgPicture.asset(
-                                            'assets/quotes_01.svg',
-                                            width: 16,
-                                            height: 16,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Text(
-                                            item['description']!,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                            ),
-                                            maxLines: 5,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Baseline(
-                                          baseline: 115,
-                                          baselineType: TextBaseline.alphabetic,
-                                          child: SvgPicture.asset(
-                                            'assets/quotes_02.svg',
-                                            width: 16,
-                                            height: 16,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+              ),
             ),
-          ),
-          const SizedBox(height: 40),
+            const SizedBox(height: 40),
 
-          //추천도서
-          Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: SizedBox(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '⭐ 책 좀 읽는 사람들의 픽 !',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: const Color.fromRGBO(67, 103, 65, 1),
+            //추천도서
+            Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: SizedBox(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '⭐ 책 좀 읽는 사람들의 픽 !',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: const Color.fromRGBO(67, 103, 65, 1),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 17),
-                  SizedBox(
-                    height: 660,
-                    child: CarouselSlider.builder(
-                      itemCount: chunkedBooks.length,
-                      itemBuilder: (context, pageIndex, realIndex) {
-                        final group = chunkedBooks[pageIndex];
-                        return Align(
-                          // 왼쪽 정렬
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            width:
-                                MediaQuery.of(context).size.width *
-                                0.92, // 너비 제한 (viewportFraction보다 살짝 작게)
-                            margin: const EdgeInsets.only(
-                              right: 12,
-                            ), // 오른쪽에만 여백
-                            child: Column(
-                              children: group.asMap().entries.map<Widget>((
-                                entry,
-                              ) {
-                                int itemIndex = entry.key;
-                                final item = entry.value;
-                                int overallIndex =
-                                    pageIndex * 3 + itemIndex + 1;
-                                return GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            Detail(id: item['itemId']),
+                    const SizedBox(height: 17),
+                    SizedBox(
+                      height: 660,
+                      child: CarouselSlider.builder(
+                        itemCount: chunkedBooks.length,
+                        itemBuilder: (context, pageIndex, realIndex) {
+                          final group = chunkedBooks[pageIndex];
+                          return Align(
+                            // 왼쪽 정렬
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              width:
+                                  MediaQuery.of(context).size.width *
+                                  0.92, // 너비 제한 (viewportFraction보다 살짝 작게)
+                              margin: const EdgeInsets.only(
+                                right: 12,
+                              ), // 오른쪽에만 여백
+                              child: Column(
+                                children: group.asMap().entries.map<Widget>((
+                                  entry,
+                                ) {
+                                  int itemIndex = entry.key;
+                                  final item = entry.value;
+                                  int overallIndex =
+                                      pageIndex * 3 + itemIndex + 1;
+                                  return GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              Detail(id: item['itemId']),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                        vertical: 6,
                                       ),
-                                    );
-                                  },
-                                  child: Container(
-                                    margin: const EdgeInsets.symmetric(
-                                      vertical: 6,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        SizedBox(
-                                          height: 200,
-                                          child: Stack(
-                                            clipBehavior: Clip.none,
-                                            children: [
-                                              Image.network(
-                                                item['cover'] ?? '',
-                                                width: 150,
-                                                height: 200,
-                                                fit: BoxFit.cover,
-                                                filterQuality:
-                                                    FilterQuality.high,
-                                              ),
-                                              Positioned(
-                                                left: -12,
-                                                bottom: -10,
-                                                child: Text(
-                                                  '$overallIndex',
-                                                  style: TextStyle(
-                                                    fontSize: 50,
+                                      child: Row(
+                                        children: [
+                                          SizedBox(
+                                            height: 200,
+                                            child: Stack(
+                                              clipBehavior: Clip.none,
+                                              children: [
+                                                Image.network(
+                                                  item['cover'] ?? '',
+                                                  width: 150,
+                                                  height: 200,
+                                                  fit: BoxFit.cover,
+                                                  filterQuality:
+                                                      FilterQuality.high,
+                                                ),
+                                                Positioned(
+                                                  left: -12,
+                                                  bottom: -10,
+                                                  child: Text(
+                                                    '$overallIndex',
+                                                    style: TextStyle(
+                                                      fontSize: 50,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color:
+                                                          const Color.fromRGBO(
+                                                            242,
+                                                            151,
+                                                            160,
+                                                            1,
+                                                          ),
+                                                      shadows: [
+                                                        Shadow(
+                                                          offset: Offset(
+                                                            2,
+                                                            2,
+                                                          ), // 그림자 위치
+                                                          blurRadius:
+                                                              3, // 흐림 정도
+                                                          color:
+                                                              const Color.fromRGBO(
+                                                                180,
+                                                                107,
+                                                                115,
+                                                                1,
+                                                              ).withValues(
+                                                                alpha: 0.5,
+                                                              ), // 색과 투명도
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  item['title'] ?? '제목 없음',
+                                                  style: const TextStyle(
                                                     fontWeight: FontWeight.w600,
-                                                    color: const Color.fromRGBO(
-                                                      242,
-                                                      151,
-                                                      160,
+                                                    fontSize: 16,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  "${item['author']} · ${item['publisher']}",
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w300,
+                                                    fontSize: 12,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  item['pubDate'] ?? '',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Color.fromRGBO(
+                                                      153,
+                                                      153,
+                                                      153,
                                                       1,
                                                     ),
-                                                    shadows: [
-                                                      Shadow(
-                                                        offset: Offset(
-                                                          2,
-                                                          2,
-                                                        ), // 그림자 위치
-                                                        blurRadius: 3, // 흐림 정도
-                                                        color:
-                                                            const Color.fromRGBO(
-                                                              180,
-                                                              107,
-                                                              115,
-                                                              1,
-                                                            ).withValues(
-                                                              alpha: 0.5,
-                                                            ), // 색과 투명도
-                                                      ),
-                                                    ],
                                                   ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                item['title'] ?? '제목 없음',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 16,
-                                                ),
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                "${item['author']} · ${item['publisher']}",
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w300,
-                                                  fontSize: 12,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                item['pubDate'] ?? '',
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Color.fromRGBO(
-                                                    153,
-                                                    153,
-                                                    153,
-                                                    1,
-                                                  ),
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                );
-                              }).toList(),
+                                  );
+                                }).toList(),
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                      options: CarouselOptions(
-                        height: 660,
-                        viewportFraction: 0.92, // 살짝 작게 해서 다음 카드 보이게
-                        enableInfiniteScroll: false,
-                        enlargeCenterPage: false, // 이거 켜면 카드가 튀어나와서 비추
+                          );
+                        },
+                        options: CarouselOptions(
+                          height: 660,
+                          viewportFraction: 0.92, // 살짝 작게 해서 다음 카드 보이게
+                          enableInfiniteScroll: false,
+                          enlargeCenterPage: false, // 이거 켜면 카드가 튀어나와서 비추
+                        ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            SizedBox(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    '흔적',
+                    style: TextStyle(
+                      fontSize: 31,
+                      color: Color.fromRGBO(182, 187, 121, 1),
+                      fontFamily: 'Ownglyph',
+                    ),
+                  ),
+                  SizedBox(width: 150, child: Divider()),
+                  Text(
+                    '''
+      대표 : 소연희, 안지현
+      서울특별시 강남구 강남대로98길 16
+      사업자번호 : 123-45-67890
+      heunjeok@gmail.com
+                      ''',
+                    style: TextStyle(height: 1.3),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        onPressed: () => _launchUrl(vercel),
+                        icon: SvgPicture.asset('vercel.svg'),
+                      ),
+                      IconButton(
+                        onPressed: () => _launchUrl(github),
+                        icon: SvgPicture.asset('git.svg'),
+                      ),
+                      IconButton(
+                        onPressed: () => _launchUrl(figma),
+                        icon: SvgPicture.asset('figma.svg'),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 40),
-          SizedBox(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  '흔적',
-                  style: TextStyle(
-                    fontSize: 31,
-                    color: Color.fromRGBO(182, 187, 121, 1),
-                    fontFamily: 'Ownglyph',
-                  ),
-                ),
-                SizedBox(width: 150, child: Divider()),
-                Text(
-                  '''
-대표 : 소연희, 안지현
-서울특별시 강남구 강남대로98길 16
-사업자번호 : 123-45-67890
-heunjeok@gmail.com
-                    ''',
-                  style: TextStyle(height: 1.3),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      onPressed: () => _launchUrl(vercel),
-                      icon: SvgPicture.asset('vercel.svg'),
-                    ),
-                    IconButton(
-                      onPressed: () => _launchUrl(github),
-                      icon: SvgPicture.asset('git.svg'),
-                    ),
-                    IconButton(
-                      onPressed: () => _launchUrl(figma),
-                      icon: SvgPicture.asset('figma.svg'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 80),
-        ],
+            const SizedBox(height: 80),
+          ],
+        ),
       ),
     );
   }

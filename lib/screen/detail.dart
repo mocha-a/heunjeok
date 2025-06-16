@@ -113,11 +113,16 @@ class _MyWidgetState extends State<Detail> {
         ),
         fontFamily: 'SUITE',
         scaffoldBackgroundColor: Colors.white,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.transparent),
-        appBarTheme: AppBarTheme(backgroundColor: Colors.transparent),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+        ),
       ),
       home: Scaffold(
         appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
           leading: IconButton(
             onPressed: () {
               Navigator.of(context).pop();
@@ -904,7 +909,7 @@ class _MyWidgetState extends State<Detail> {
             (review) => review['review_id'].toString() == reviewId.toString(),
           );
       });
-      print("삭제 성공");
+      // print("삭제 성공");
     } else {
       print("삭제 실패: ${data['message']}");
       ScaffoldMessenger.of(
@@ -919,7 +924,7 @@ class _MyWidgetState extends State<Detail> {
       'review_id': reviewId,
       'password': password.trim(),
     });
-    print("서버에 보내는 JSON body: $bodyJson");
+    // print("서버에 보내는 JSON body: $bodyJson");
 
     final response = await http.post(
       Uri.parse(
@@ -928,8 +933,6 @@ class _MyWidgetState extends State<Detail> {
       headers: {'Content-Type': 'application/json'},
       body: bodyJson,
     );
-    print("[Flutter] 서버 응답 상태 코드: ${response.statusCode}");
-    print("[Flutter] 서버 응답 body: ${response.body}");
 
     final data = json.decode(response.body);
     return data['success'] == true;

@@ -52,6 +52,7 @@ class _SearchWidgetState extends State<Search>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           // 검색창
@@ -110,35 +111,41 @@ class _SearchWidgetState extends State<Search>
               SizedBox(height: 5),
               SizedBox(
                 height: 30,
-                child: Row(
-                  children: recentSearch.map((item) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(20),
-                        onTap: () {
-                          _controller.text = item;
-                          bookController.search(item);
-                          bookController.writeSearch(item);
-                          addRecentSearch(item);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Color.fromRGBO(182, 187, 121, 1),
-                              width: 1,
+                width: double.infinity,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: BouncingScrollPhysics(),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: recentSearch.map((item) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () {
+                            _controller.text = item;
+                            bookController.search(item);
+                            bookController.writeSearch(item);
+                            addRecentSearch(item);
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
                             ),
-                            borderRadius: BorderRadius.circular(20),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Color.fromRGBO(182, 187, 121, 1),
+                                width: 1,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(item, overflow: TextOverflow.ellipsis),
                           ),
-                          child: Text(item, overflow: TextOverflow.ellipsis),
                         ),
-                      ),
-                    );
-                  }).toList(),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
               SizedBox(height: 10),

@@ -56,7 +56,7 @@ class _SearchWriteState extends State<SearchWrite> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SvgPicture.asset('assets/nobook.svg'),
+              SvgPicture.asset('assets/nowrite.svg'),
               const SizedBox(height: 10),
               const Text('검색 결과가 없습니다.'),
             ],
