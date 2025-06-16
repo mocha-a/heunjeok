@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -16,6 +17,8 @@ class Detail extends StatefulWidget {
 }
 
 class _MyWidgetState extends State<Detail> {
+  var apiUrl = dotenv.env['API_URL'];
+  var bookapiUrl = dotenv.env['BOOK_API_URL'];
   List<dynamic> selectedBook = [];
   List<Map<String, dynamic>> reviews = []; // 리뷰 목록
 
@@ -77,7 +80,7 @@ class _MyWidgetState extends State<Detail> {
   //itmeId 값으로 책 정보 가져오기
   Future<void> itemIDApi(int itemId) async {
     final response = await http.get(
-      Uri.parse('http://localhost/heunjeok-server/item_id.php?itemId=$itemId'),
+      Uri.parse('${apiUrl}/item_id.php?itemId=$itemId'),
     );
 
     setState(() {
@@ -88,9 +91,7 @@ class _MyWidgetState extends State<Detail> {
   Future<void> loadReviews() async {
     try {
       final response = await http.get(
-        Uri.parse(
-          'http://localhost/heunjeok-server/bookreviews/review_get.php?bookId=${widget.id}',
-        ),
+        Uri.parse('${bookapiUrl}/review_get.php?bookId=${widget.id}'),
       );
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
@@ -127,13 +128,13 @@ class _MyWidgetState extends State<Detail> {
             onPressed: () {
               Navigator.of(context).pop();
             },
-            icon: SvgPicture.asset('back.svg', width: 18),
+            icon: SvgPicture.asset('assets/back.svg', width: 18),
           ),
         ),
         body: selectedBook.isEmpty
             ? Center(
                 child: Image.asset(
-                  'loading_green.gif',
+                  'assets/loading_green.gif',
                   width: 316,
                   height: 316,
                 ),
@@ -542,7 +543,7 @@ class _MyWidgetState extends State<Detail> {
     String? initialNickname,
     String? initialContent,
     String? initialPassword,
-    double initialRating = 0.0,
+    double initialRating = 2.5,
     bool isEdit = false,
     int? reviewId,
   }) {
@@ -574,220 +575,261 @@ class _MyWidgetState extends State<Detail> {
               }
             });
 
-            return Container(
-              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Form(
-                    key: formkey,
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 24),
+                child: SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: 0,
+                      maxHeight: MediaQuery.of(context).size.height * 0.9,
+                    ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SizedBox(height: 10),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: RatingBar.builder(
-                            initialRating: rating,
-                            glow: false,
-                            minRating: 0.5,
-                            direction: Axis.horizontal,
-                            allowHalfRating: true,
-                            itemCount: 5,
-                            itemSize: 25,
-                            itemPadding: EdgeInsets.symmetric(horizontal: 2),
-                            itemBuilder: (context, _) => Icon(
-                              Icons.star_rate_rounded,
-                              color: Color.fromARGB(255, 242, 151, 160),
-                            ),
-                            unratedColor: Color.fromARGB(255, 238, 203, 206),
-                            onRatingUpdate: (newRating) {
-                              setModalState(() {
-                                rating = newRating;
-                              });
-                            },
-                          ),
-                        ),
-                        SizedBox(height: 16),
-                        TextFormField(
-                          controller: nicknameController,
-                          focusNode: nicknameFocusNode,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "닉네임을 입력해 주세요!";
-                            }
-                            return null;
-                          },
-                          decoration: InputDecoration(
-                            labelText: '닉네임',
-                            errorText: nicknameErrorText,
-                          ),
-                          onSaved: (value) {
-                            nickname = value;
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        TextFormField(
-                          controller: contentController,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "기록 내용을 입력해 주세요!";
-                            }
-                            return null;
-                          },
-                          maxLines: 5,
-                          decoration: InputDecoration(labelText: '기록내용'),
-                          onSaved: (value) {
-                            content = value;
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        TextFormField(
-                          obscureText: obscureText,
-                          controller: passwordController,
-                          focusNode: passwordFocusNode,
-                          keyboardType: TextInputType.text,
-                          // inputFormatters: [
-                          //   //조건이 맞지 않으면 입력 차단
-                          //   FilteringTextInputFormatter.allow(
-                          //     //입력 가능한 패턴을 받아서 가능한 패턴만 허용
-                          //     RegExp(r'[a-zA-Z0-9!@#\$%^&*]'), //정규식 만드는 곳
-                          //   ),
-                          // ],
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "비밀번호를 입력해 주세요!";
-                            }
-                            if (!validationPassword(value)) {
-                              return "🔒 영문, 숫자, 특수문자가 모두 포함된 6자 이상의 비밀번호를 입력해 주세요!";
-                            }
-                            return null;
-                          },
-                          decoration: InputDecoration(
-                            labelText: '비밀번호',
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                obscureText
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                              ),
-                              onPressed: () {
-                                setModalState(() {
-                                  obscureText = !obscureText;
-                                });
-                              },
-                            ),
-                          ),
-                          onSaved: (value) {
-                            password = value;
-                          },
-                        ),
-                        SizedBox(height: 30),
-                      ],
-                    ),
-                  ),
-
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 30),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () async {
-                            if (formkey.currentState!.validate()) {
-                              final body = isEdit
-                                  ? {
-                                      'review_id': reviewId.toString(),
-                                      'rev_nickname': nicknameController.text,
-                                      'password': passwordController.text,
-                                      'rev_content': contentController.text,
-                                      'rev_rating': rating.toString(),
-                                    }
-                                  : {
-                                      'book_id': selectedBook[0]['itemId']
-                                          .toString(),
-                                      'book_cover': selectedBook[0]['cover'],
-                                      'book_title': selectedBook[0]['title'],
-                                      'book_author': selectedBook[0]['author'],
-                                      'book_publisher':
-                                          selectedBook[0]['publisher'],
-                                      'book_pubDate':
-                                          selectedBook[0]['pubDate'],
-                                      'rev_nickname': nicknameController.text,
-                                      'rev_password': passwordController.text,
-                                      'rev_content': contentController.text,
-                                      'rev_rating': rating.toString(),
-                                    };
-
-                              final response = await http.post(
-                                Uri.parse(
-                                  isEdit
-                                      ? "http://localhost/heunjeok-server/bookreviews/update.php"
-                                      : "http://localhost/heunjeok-server/bookreviews/insert.php",
+                        Form(
+                          key: formkey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(height: 10),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: RatingBar.builder(
+                                  initialRating: rating,
+                                  glow: false,
+                                  minRating: 0.5,
+                                  direction: Axis.horizontal,
+                                  allowHalfRating: true,
+                                  itemCount: 5,
+                                  itemSize: 25,
+                                  itemPadding: EdgeInsets.symmetric(
+                                    horizontal: 2,
+                                  ),
+                                  itemBuilder: (context, _) => Icon(
+                                    Icons.star_rate_rounded,
+                                    color: Color.fromARGB(255, 242, 151, 160),
+                                  ),
+                                  unratedColor: Color.fromARGB(
+                                    255,
+                                    238,
+                                    203,
+                                    206,
+                                  ),
+                                  onRatingUpdate: (newRating) {
+                                    setModalState(() {
+                                      rating = newRating;
+                                    });
+                                  },
                                 ),
-                                body: body,
-                              );
+                              ),
+                              SizedBox(height: 16),
+                              TextFormField(
+                                controller: nicknameController,
+                                focusNode: nicknameFocusNode,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return "닉네임을 입력해 주세요!";
+                                  }
+                                  return null;
+                                },
+                                decoration: InputDecoration(
+                                  labelText: '닉네임',
+                                  errorText: nicknameErrorText,
+                                ),
+                                onSaved: (value) {
+                                  nickname = value;
+                                },
+                              ),
+                              SizedBox(height: 16),
+                              TextFormField(
+                                controller: contentController,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return "기록 내용을 입력해 주세요!";
+                                  }
+                                  return null;
+                                },
+                                maxLines: 3,
+                                decoration: InputDecoration(labelText: '기록내용'),
+                                onSaved: (value) {
+                                  content = value;
+                                },
+                              ),
+                              SizedBox(height: 16),
+                              TextFormField(
+                                obscureText: obscureText,
+                                controller: passwordController,
+                                focusNode: passwordFocusNode,
+                                keyboardType: TextInputType.text,
+                                // inputFormatters: [
+                                //   //조건이 맞지 않으면 입력 차단
+                                //   FilteringTextInputFormatter.allow(
+                                //     //입력 가능한 패턴을 받아서 가능한 패턴만 허용
+                                //     RegExp(r'[a-zA-Z0-9!@#\$%^&*]'), //정규식 만드는 곳
+                                //   ),
+                                // ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return "비밀번호를 입력해 주세요!";
+                                  }
+                                  if (!validationPassword(value)) {
+                                    return "🔒 영문, 숫자, 특수문자가 모두 포함된 6자 이상의 비밀번호를 입력해 주세요!";
+                                  }
+                                  return null;
+                                },
+                                decoration: InputDecoration(
+                                  labelText: '비밀번호',
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      obscureText
+                                          ? Icons.visibility_off_outlined
+                                          : Icons.visibility_outlined,
+                                    ),
+                                    onPressed: () {
+                                      setModalState(() {
+                                        obscureText = !obscureText;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                onSaved: (value) {
+                                  password = value;
+                                },
+                              ),
+                              SizedBox(height: 30),
+                            ],
+                          ),
+                        ),
 
-                              if (response.statusCode == 200) {
-                                final result = json.decode(
-                                  utf8.decode(response.bodyBytes),
-                                );
-                                if (result['success'] == true) {
-                                  // 저장 후 입력 내용 초기화
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: 30),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () async {
+                                  if (formkey.currentState!.validate()) {
+                                    final body = isEdit
+                                        ? {
+                                            'review_id': reviewId.toString(),
+                                            'rev_nickname':
+                                                nicknameController.text,
+                                            'password': passwordController.text,
+                                            'rev_content':
+                                                contentController.text,
+                                            'rev_rating': rating.toString(),
+                                          }
+                                        : {
+                                            'book_id': selectedBook[0]['itemId']
+                                                .toString(),
+                                            'book_cover':
+                                                selectedBook[0]['cover'],
+                                            'book_title':
+                                                selectedBook[0]['title'],
+                                            'book_author':
+                                                selectedBook[0]['author'],
+                                            'book_publisher':
+                                                selectedBook[0]['publisher'],
+                                            'book_pubDate':
+                                                selectedBook[0]['pubDate'],
+                                            'rev_nickname':
+                                                nicknameController.text,
+                                            'rev_password':
+                                                passwordController.text,
+                                            'rev_content':
+                                                contentController.text,
+                                            'rev_rating': rating.toString(),
+                                          };
+
+                                    final response = await http.post(
+                                      Uri.parse(
+                                        isEdit
+                                            ? "${bookapiUrl}/update.php"
+                                            : "${bookapiUrl}/insert.php",
+                                      ),
+                                      body: body,
+                                    );
+
+                                    if (response.statusCode == 200) {
+                                      final result = json.decode(
+                                        utf8.decode(response.bodyBytes),
+                                      );
+                                      if (result['success'] == true) {
+                                        // 저장 후 입력 내용 초기화
+                                        nicknameController.clear();
+                                        passwordController.clear();
+                                        contentController.clear();
+                                        rating = 0;
+                                        nicknameAvailable = false;
+                                        nicknameErrorText = null;
+                                        Navigator.pop(
+                                          context,
+                                          'success',
+                                        ); // 팝업 닫기
+                                      } else {
+                                        print(
+                                          "서버에서 실패 응답 받음: ${result['message'] ?? '메시지 없음'}",
+                                        );
+                                      }
+                                    } else {
+                                      print("서버 요청 실패: ${response.statusCode}");
+                                    }
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color.fromARGB(
+                                    255,
+                                    182,
+                                    187,
+                                    121,
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: Text(
+                                  '저장',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              SizedBox(width: 16),
+                              ElevatedButton(
+                                onPressed: () {
+                                  // 취소 클릭 시 입력 내용 초기화
                                   nicknameController.clear();
                                   passwordController.clear();
                                   contentController.clear();
                                   rating = 0;
                                   nicknameAvailable = false;
                                   nicknameErrorText = null;
-                                  Navigator.pop(context, 'success'); // 팝업 닫기
-                                } else {
-                                  print(
-                                    "서버에서 실패 응답 받음: ${result['message'] ?? '메시지 없음'}",
-                                  );
-                                }
-                              } else {
-                                print("서버 요청 실패: ${response.statusCode}");
-                              }
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color.fromARGB(255, 182, 187, 121),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            '저장',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                        SizedBox(width: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            // 취소 클릭 시 입력 내용 초기화
-                            nicknameController.clear();
-                            passwordController.clear();
-                            contentController.clear();
-                            rating = 0;
-                            nicknameAvailable = false;
-                            nicknameErrorText = null;
-                            Navigator.of(context).pop();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color.fromARGB(255, 239, 239, 239),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            '취소',
-                            style: TextStyle(
-                              color: Color.fromARGB(255, 51, 51, 51),
-                            ),
+                                  Navigator.of(context).pop();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color.fromARGB(
+                                    255,
+                                    239,
+                                    239,
+                                    239,
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: Text(
+                                  '취소',
+                                  style: TextStyle(
+                                    color: Color.fromARGB(255, 51, 51, 51),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
             );
           },
@@ -897,7 +939,7 @@ class _MyWidgetState extends State<Detail> {
   //흔적 삭제 함수
   void deleteReview(int reviewId, String password) async {
     final response = await http.post(
-      Uri.parse('http://localhost/heunjeok-server/bookreviews/delete.php'),
+      Uri.parse('${bookapiUrl}/delete.php'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'review_id': reviewId, 'password': password.trim()}),
     );
@@ -927,9 +969,7 @@ class _MyWidgetState extends State<Detail> {
     // print("서버에 보내는 JSON body: $bodyJson");
 
     final response = await http.post(
-      Uri.parse(
-        'http://localhost/heunjeok-server/bookreviews/password_check.php',
-      ),
+      Uri.parse('${bookapiUrl}/password_check.php'),
       headers: {'Content-Type': 'application/json'},
       body: bodyJson,
     );
@@ -948,9 +988,7 @@ class _MyWidgetState extends State<Detail> {
 
   // 닉네임 중복 검사
   Future<bool> checkNickname(String nickname) async {
-    final url = Uri.parse(
-      'http://localhost/heunjeok-server/bookreviews/check_nickname.php',
-    );
+    final url = Uri.parse('${bookapiUrl}/check_nickname.php');
 
     final response = await http.post(url, body: {'rev_nickname': nickname});
 

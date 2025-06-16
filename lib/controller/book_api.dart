@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class BookApi {
   // 추천 도서
   static Future<List<dynamic>> recommendApi() async {
-    final response = await http.get(
-      Uri.parse('http://localhost/heunjeok-server/recommend.php'),
-    );
+    var apiUrl = dotenv.env['API_URL'];
+    final response = await http.get(Uri.parse('${apiUrl}/recommend.php'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body); // Map<String, dynamic>
@@ -19,9 +19,8 @@ class BookApi {
 
   // 베스트셀러
   static Future<List<dynamic>> bestsellerApi() async {
-    final response = await http.get(
-      Uri.parse('http://localhost/heunjeok-server/bestseller.php'),
-    );
+    var apiUrl = dotenv.env['API_URL'];
+    final response = await http.get(Uri.parse('${apiUrl}/bestseller.php'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body); // Map<String, dynamic>
@@ -37,9 +36,10 @@ class BookApi {
     String query, {
     int page = 1,
   }) async {
+    var apiUrl = dotenv.env['API_URL'];
     final response = await http.get(
       Uri.parse(
-        'http://localhost/heunjeok-server/search_book.php?query=${Uri.encodeComponent(query)}&page=$page',
+        '${apiUrl}/search_book.php?query=${Uri.encodeComponent(query)}&page=$page',
       ),
     );
 
@@ -59,10 +59,9 @@ class BookApi {
     String query, {
     int page = 1,
   }) async {
+    var apiUrl = dotenv.env['API_URL'];
     final encodedQuery = Uri.encodeComponent(query);
-    final url = Uri.parse(
-      'http://localhost/heunjeok-server/search_write.php?keyword=$encodedQuery',
-    );
+    final url = Uri.parse('${apiUrl}/search_write.php?keyword=$encodedQuery');
 
     final response = await http.get(url);
 

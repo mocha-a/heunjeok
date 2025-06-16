@@ -43,6 +43,7 @@ dependencies:
   get: ^4.7.2
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  flutter_dotenv: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +63,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/
+    - .env
 
   fonts:
     - family: Ownglyph

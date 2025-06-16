@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:heunjeok/utils/scroll_listener.dart';
 import 'package:heunjeok/widgets/dialog.dart';
 import 'package:http/http.dart' as http;
@@ -15,6 +16,7 @@ class Book extends StatefulWidget {
 }
 
 class _MyWidgetState extends State<Book> {
+  var bookapiUrl = dotenv.env['BOOK_API_URL'];
   List<Map<String, dynamic>> book = []; // 책 정보
   List<Map<String, dynamic>> reviews = []; // 리뷰 목록
   late final ScrollController _scrollController;
@@ -70,9 +72,7 @@ class _MyWidgetState extends State<Book> {
 
   Future<List<Map<String, dynamic>>> fetchAllReviews(int page) async {
     final response = await http.get(
-      Uri.parse(
-        'http://localhost/heunjeok-server/bookreviews/all_get.php?page=$page',
-      ),
+      Uri.parse('${bookapiUrl}/all_get.php?page=$page'),
     );
 
     if (response.statusCode == 200) {
@@ -180,7 +180,7 @@ class _MyWidgetState extends State<Book> {
                         ),
                       ),
                       SizedBox(width: 6),
-                      SvgPicture.asset("recycle.svg"),
+                      SvgPicture.asset("assets/recycle.svg"),
                     ],
                   ),
                 ),
@@ -224,7 +224,7 @@ class _MyWidgetState extends State<Book> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   SizedBox(height: 150),
-                  Image.asset('nolist.png', width: 176),
+                  Image.asset('assets/nolist.png', width: 176),
                 ],
               ),
             ),
@@ -245,6 +245,7 @@ class _MyWidgetState extends State<Book> {
       builder: (context) =>
           ReviewDialog(bookItem: bookItem, onReturn: refreshCallback),
     );
+
     if (result == true) {
       await refreshCallback();
     }

@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
@@ -20,6 +21,7 @@ class Home extends StatefulWidget {
 }
 
 class _MyWidgetState extends State<Home> {
+  var apiUrl = dotenv.env['API_URL'];
   // 각 링크를 Uri로 선언
   final Uri vercel = Uri.parse('https://www.naver.com');
   final Uri github = Uri.parse('https://github.com/mocha-a/heunjeok.git');
@@ -65,9 +67,7 @@ class _MyWidgetState extends State<Home> {
 
   //알라딘 추천도서 api
   Future<void> recommendApi() async {
-    final response = await http.get(
-      Uri.parse('http://localhost/heunjeok-server/recommend.php'),
-    );
+    final response = await http.get(Uri.parse('${apiUrl}/recommend.php'));
 
     setState(() {
       recommend = json.decode(response.body);
@@ -76,9 +76,7 @@ class _MyWidgetState extends State<Home> {
 
   //알라딘 베스트셀러 api
   Future<void> bestsellerApi() async {
-    final response = await http.get(
-      Uri.parse('http://localhost/heunjeok-server/bestseller.php'),
-    );
+    final response = await http.get(Uri.parse('${apiUrl}/bestseller.php'));
 
     setState(() {
       bestseller = json.decode(response.body);
@@ -101,7 +99,7 @@ class _MyWidgetState extends State<Home> {
 
     if (isLoading) {
       return Center(
-        child: Image.asset('/loading_green.gif', width: 316, height: 316),
+        child: Image.asset('assets/loading_green.gif', width: 316, height: 316),
       );
     }
 
@@ -461,15 +459,15 @@ class _MyWidgetState extends State<Home> {
                     children: [
                       IconButton(
                         onPressed: () => _launchUrl(vercel),
-                        icon: SvgPicture.asset('vercel.svg'),
+                        icon: SvgPicture.asset('assets/vercel.svg'),
                       ),
                       IconButton(
                         onPressed: () => _launchUrl(github),
-                        icon: SvgPicture.asset('git.svg'),
+                        icon: SvgPicture.asset('assets/git.svg'),
                       ),
                       IconButton(
                         onPressed: () => _launchUrl(figma),
-                        icon: SvgPicture.asset('figma.svg'),
+                        icon: SvgPicture.asset('assets/figma.svg'),
                       ),
                     ],
                   ),

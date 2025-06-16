@@ -82,7 +82,7 @@ class _SearchWidgetState extends State<Search>
                 suffixIcon: Padding(
                   padding: const EdgeInsets.only(right: 25),
                   child: IconButton(
-                    icon: SvgPicture.asset('search_white.svg'),
+                    icon: SvgPicture.asset('assets/search_white.svg'),
                     onPressed: () async {
                       final value = _controller.text.trim();
                       await addRecentSearch(value);

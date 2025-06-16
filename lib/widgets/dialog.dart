@@ -152,9 +152,9 @@ class ReviewDialog extends StatelessWidget {
                 builder: (_) => Detail(id: int.parse(bookItem["book_id"])),
               ),
             ).then((_) {
-              Navigator.of(context).pop();
-              // 되돌아오면 리뷰 다시 불러오기 위해 팝업 닫음
               onReturn?.call(); //리뷰 목록 새로고침
+              Navigator.of(context).pop(true);
+              // 되돌아오면 리뷰 다시 불러오기 위해 팝업 닫음
             });
           },
           child: Text(

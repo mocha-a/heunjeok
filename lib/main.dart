@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -14,6 +15,7 @@ void main() async {
   await Hive.initFlutter(); //hive 초기화
   await Hive.openBox('scheduleBox'); //문서 생성
   await Hive.openBox<String>('recentSearchBox');
+  await dotenv.load();
 
   Get.put(BookController());
   runApp(const MyApp());
@@ -77,7 +79,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(child: Image.asset('splash.png')),
+      body: Center(child: Image.asset('assets/splash.png')),
     );
   }
 }
@@ -129,7 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            SvgPicture.asset('logo.svg'),
+            SvgPicture.asset('assets/logo.svg'),
             SizedBox(width: 6),
             Text(
               '흔적',
