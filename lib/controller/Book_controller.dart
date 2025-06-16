@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:heunjeok/controller/book_api.dart';
 
 class BookController extends GetxController {
-  var books = <dynamic>[].obs; //검색 결과 리스트
-  var total = 0.obs; //검색 결과 개수
+  var books = <dynamic>[].obs; //도서 검색 결과 리스트
+  var writes = <dynamic>[].obs; //기록 검색 결과 리스트
+  var total = 0.obs; //도서 검색 결과 개수
+  var writeTotal = 0.obs; //기록 검색 결과 개수
 
   var isLoading = false.obs; //로딩 상태 관리
   var isLoadMore = false.obs; //여기에 추가
@@ -15,6 +16,7 @@ class BookController extends GetxController {
 
   var isEnd = false.obs; // 더 불러올 데이터가 없으면 true
 
+  // 도서 검색 결과
   Future<void> search(String query, {bool isLoadMore = false}) async {
     //Load More가 아니면 (즉, 새로 검색이면)
     if (!isLoadMore) {
@@ -42,6 +44,44 @@ class BookController extends GetxController {
         books.addAll(newItems);
       } else {
         books.value = newItems; // 새 검색 시 리스트 교체
+      }
+    } finally {
+      //API 호출 끝나면 로딩 상태 해제
+      isLoading.value = false;
+      this.isLoadMore.value = false;
+    }
+  }
+
+  //기록 검색 결과
+  Future<void> writeSearch(String query, {bool isLoadMore = false}) async {
+    if (!isLoadMore) {
+      currentPage.value = 1;
+      writes.clear();
+    } else {
+      currentPage.value++;
+    }
+
+    currentQuery.value = query;
+    this.isLoadMore.value = isLoadMore;
+    isLoading.value = true;
+
+    try {
+      final newItem = await BookApi.searchWiteApi(
+        query,
+        page: currentPage.value,
+      );
+
+      final total = newItem['total'];
+      final List<dynamic> items = newItem['items'];
+
+      //결과 개수
+      writeTotal.value = total;
+
+      //결과를 기존 데이터에 추가할지, 새로 덮어쓸지 결정
+      if (isLoadMore) {
+        writes.addAll(items);
+      } else {
+        writes.value = items; // 새 검색 시 리스트 교체
       }
     } finally {
       //API 호출 끝나면 로딩 상태 해제

@@ -143,27 +143,36 @@ class _MyHomePageState extends State<MyHomePage> {
           BottomNavigationBarItem(
             icon: SvgPicture.asset(
               'assets/home_grey.svg',
-              color: seletedIndex == 0
-                  ? Color.fromRGBO(182, 187, 121, 1)
-                  : Color.fromRGBO(153, 153, 153, 1),
+              colorFilter: ColorFilter.mode(
+                seletedIndex == 0
+                    ? Color.fromRGBO(182, 187, 121, 1)
+                    : Color.fromRGBO(153, 153, 153, 1),
+                BlendMode.srcIn, // 보통 srcIn을 많이 씀, 필요에 따라 변경 가능
+              ),
             ),
             label: '홈',
           ),
           BottomNavigationBarItem(
             icon: SvgPicture.asset(
               'assets/book_grey.svg',
-              color: seletedIndex == 1
-                  ? Color.fromRGBO(182, 187, 121, 1)
-                  : Color.fromRGBO(153, 153, 153, 1),
+              colorFilter: ColorFilter.mode(
+                seletedIndex == 1
+                    ? Color.fromRGBO(182, 187, 121, 1)
+                    : Color.fromRGBO(153, 153, 153, 1),
+                BlendMode.srcIn, // 보통 srcIn을 많이 씀, 필요에 따라 변경 가능
+              ),
             ),
             label: '기록',
           ),
           BottomNavigationBarItem(
             icon: SvgPicture.asset(
               'assets/search_grey.svg',
-              color: seletedIndex == 2
-                  ? Color.fromRGBO(182, 187, 121, 1)
-                  : Color.fromRGBO(153, 153, 153, 1),
+              colorFilter: ColorFilter.mode(
+                seletedIndex == 2
+                    ? Color.fromRGBO(182, 187, 121, 1)
+                    : Color.fromRGBO(153, 153, 153, 1),
+                BlendMode.srcIn, // 보통 srcIn을 많이 씀, 필요에 따라 변경 가능
+              ),
             ),
             label: '검색',
           ),

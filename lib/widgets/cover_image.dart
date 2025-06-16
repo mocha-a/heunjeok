@@ -5,18 +5,14 @@ class CoverImage extends StatelessWidget {
   final String imagePath;
   final double height;
 
-  const CoverImage({
-    Key? key,
-    required this.imagePath,
-    this.height = 380, // 기본값 설정
-  }) : super(key: key);
+  const CoverImage({super.key, required this.imagePath, this.height = 380});
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         // 배경 이미지
-        Container(
+        SizedBox(
           width: double.infinity,
           height: height,
           child: Image.network(imagePath, fit: BoxFit.cover),
@@ -25,7 +21,7 @@ class CoverImage extends StatelessWidget {
         Positioned.fill(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(color: Colors.black.withOpacity(0.3)),
+            child: Container(color: Colors.black.withValues(alpha: 0.3)),
           ),
         ),
         // 커버 이미지

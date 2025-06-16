@@ -5,7 +5,7 @@ class BookApi {
   // 추천 도서
   static Future<List<dynamic>> recommendApi() async {
     final response = await http.get(
-      Uri.parse('http://localhost/recommend.php'),
+      Uri.parse('http://localhost/heunjeok-server/recommend.php'),
     );
 
     if (response.statusCode == 200) {
@@ -39,7 +39,7 @@ class BookApi {
   }) async {
     final response = await http.get(
       Uri.parse(
-        'http://localhost/heunjeok-server/search.php?query=${Uri.encodeComponent(query)}&page=$page',
+        'http://localhost/heunjeok-server/search_book.php?query=${Uri.encodeComponent(query)}&page=$page',
       ),
     );
 
@@ -51,6 +51,25 @@ class BookApi {
       return {'totalResults': totalResults, 'items': items};
     } else {
       throw Exception('책 검색 실패: ${response.statusCode}');
+    }
+  }
+
+  //기록 검색
+  static Future<Map<String, dynamic>> searchWiteApi(
+    String query, {
+    int page = 1,
+  }) async {
+    final encodedQuery = Uri.encodeComponent(query);
+    final url = Uri.parse(
+      'http://localhost/heunjeok-server/search_write.php?keyword=$encodedQuery',
+    );
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      return json.decode(utf8.decode(response.bodyBytes));
+    } else {
+      throw Exception('검색 실패: ${response.statusCode}');
     }
   }
 }
