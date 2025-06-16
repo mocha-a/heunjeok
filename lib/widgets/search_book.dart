@@ -5,7 +5,7 @@ import 'package:heunjeok/controller/book_controller.dart';
 import 'package:heunjeok/screen/detail.dart';
 
 class SearchBook extends StatefulWidget {
-  const SearchBook({Key? key}) : super(key: key);
+  const SearchBook({super.key});
 
   @override
   State<SearchBook> createState() => _SearchBookState();

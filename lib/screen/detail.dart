@@ -2,21 +2,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:heunjeok/widgets/cover_image.dart';
-
-// 왼쪽 절반만 보이도록 클리퍼 구현
-class _HalfClipper extends CustomClipper<Rect> {
-  @override
-  Rect getClip(Size size) {
-    return Rect.fromLTWH(0, 0, size.width / 2, size.height);
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Rect> oldClipper) => false;
-}
 
 class Detail extends StatefulWidget {
   final int id;
@@ -27,7 +15,7 @@ class Detail extends StatefulWidget {
 }
 
 class _MyWidgetState extends State<Detail> {
-  Map<String, dynamic>? selectedBook;
+  List<dynamic> selectedBook = [];
   List<Map<String, dynamic>> reviews = []; // 리뷰 목록
 
   final formkey = GlobalKey<FormState>();
@@ -37,33 +25,24 @@ class _MyWidgetState extends State<Detail> {
   String? nickname;
   String? password;
   String? content;
-  double rating = 2.5; // 기록내용 작성 시 열리는 팝업 초기 별점 값
 
   @override
   void initState() {
     super.initState();
     print("불러올 id: ${widget.id}");
-    recommend();
+    itemIDApi(widget.id);
     loadReviews();
-    // 실제 서버 호출로 변경하기
-    // fetchBookAndReviews(widget.id);
   }
 
-  Future<void> recommend() async {
-    String jsonString = await rootBundle.loadString('bbbbb.json');
-    List<dynamic> jsonData = json.decode(jsonString);
-    final found = jsonData.firstWhere(
-      (item) => item['itemId'] == widget.id,
-      orElse: () => null,
+  //itmeId 값으로 책 정보 가져오기
+  Future<void> itemIDApi(int itemId) async {
+    final response = await http.get(
+      Uri.parse('http://localhost/heunjeok-server/item_id.php?itemId=$itemId'),
     );
 
-    if (found != null) {
-      setState(() {
-        selectedBook = found;
-      });
-    } else {
-      print('해당 ID의 책을 찾을 수 없습니다.');
-    }
+    setState(() {
+      selectedBook = json.decode(response.body);
+    });
   }
 
   Future<void> loadReviews() async {
@@ -75,6 +54,7 @@ class _MyWidgetState extends State<Detail> {
       );
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
+        print("받아온 리뷰 데이터: $data");
         setState(() {
           reviews = data.map((e) => Map<String, dynamic>.from(e)).toList();
         });
@@ -105,7 +85,7 @@ class _MyWidgetState extends State<Detail> {
             icon: SvgPicture.asset('back.svg', width: 18),
           ),
         ),
-        body: selectedBook == null
+        body: selectedBook.isEmpty
             ? Center(
                 child: Image.asset(
                   'loading_green.gif',
@@ -121,7 +101,7 @@ class _MyWidgetState extends State<Detail> {
                       clipBehavior: Clip.none, // 음수 위치도 허용
                       children: [
                         CoverImage(
-                          imagePath: selectedBook!['cover'],
+                          imagePath: selectedBook[0]['cover'],
                           height: 470,
                         ),
                       ],
@@ -146,7 +126,7 @@ class _MyWidgetState extends State<Detail> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "${selectedBook!['title']}",
+                                    "${selectedBook[0]['title']}",
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w600,
@@ -154,12 +134,12 @@ class _MyWidgetState extends State<Detail> {
                                   ),
                                   SizedBox(height: 10),
                                   Text(
-                                    "${selectedBook!['description']}",
+                                    "${selectedBook[0]['description']}",
                                     style: TextStyle(fontSize: 14),
                                   ),
                                   SizedBox(height: 10),
                                   Text(
-                                    "${selectedBook!['publisher']} / ${selectedBook!['author']}",
+                                    "${selectedBook[0]['author']} / ${selectedBook[0]['publisher']}",
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
@@ -167,7 +147,7 @@ class _MyWidgetState extends State<Detail> {
                                   ),
                                   SizedBox(height: 10),
                                   Text(
-                                    "${selectedBook!['pubDate']}",
+                                    "${selectedBook[0]['pubDate']}",
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Color.fromARGB(255, 85, 85, 85),
@@ -207,16 +187,48 @@ class _MyWidgetState extends State<Detail> {
                                             Spacer(),
                                             TextButton(
                                               onPressed: () {
-                                                passwordAlertDialog((pw) {
-                                                  setState(() {
-                                                    reviewController.text =
-                                                        review["content"];
-                                                    editingName =
-                                                        review["nickname"];
-                                                  });
-                                                }, review["password"]);
-                                                print(
-                                                  "비밀번호 확인용: ${review["password"]}",
+                                                if (!review.containsKey(
+                                                  'review_id',
+                                                )) {
+                                                  return;
+                                                }
+                                                final rawReviewId =
+                                                    review["review_id"];
+                                                final int reviewId =
+                                                    (rawReviewId is int)
+                                                    ? rawReviewId
+                                                    : int.tryParse(
+                                                            rawReviewId
+                                                                .toString(),
+                                                          ) ??
+                                                          0;
+
+                                                passwordAlertDialog(
+                                                  reviewId: reviewId,
+                                                  onConfirmed: (String password) async {
+                                                    // 비번 확인되면 수정폼 열기
+                                                    final result = await addForm(
+                                                      context,
+                                                      initialNickname:
+                                                          review["nickname"],
+                                                      initialContent:
+                                                          review["content"],
+                                                      initialRating:
+                                                          double.tryParse(
+                                                            review["rating"]
+                                                                .toString(),
+                                                          ) ??
+                                                          0.0,
+                                                      initialPassword: '',
+                                                      isEdit: true,
+                                                      reviewId: reviewId,
+                                                    );
+                                                    if (result == 'success') {
+                                                      // 수정 성공 시 리뷰 목록 다시 받아오기 or 상태 업데이트
+                                                      await loadReviews(); // 서버에서 최신 리뷰 목록 재로딩 함수
+                                                      setState(() {}); // 화면 갱신
+                                                    }
+                                                  },
                                                 );
                                               },
                                               style: ButtonStyle(
@@ -254,19 +266,37 @@ class _MyWidgetState extends State<Detail> {
                                             SizedBox(width: 7),
                                             TextButton(
                                               onPressed: () {
-                                                passwordAlertDialog((pw) {
-                                                  if (pw ==
-                                                      review["password"]) {
-                                                    deleteAlertDialog(
-                                                      context,
-                                                      () {
-                                                        deleteReview(
-                                                          review["review_id"],
+                                                if (!review.containsKey(
+                                                  'review_id',
+                                                )) {
+                                                  return;
+                                                }
+                                                final rawReviewId =
+                                                    review["review_id"];
+                                                final int reviewId =
+                                                    (rawReviewId is int)
+                                                    ? rawReviewId
+                                                    : int.tryParse(
+                                                            rawReviewId
+                                                                .toString(),
+                                                          ) ??
+                                                          0;
+
+                                                passwordAlertDialog(
+                                                  reviewId: reviewId,
+                                                  onConfirmed:
+                                                      (String password) {
+                                                        deleteAlertDialog(
+                                                          context,
+                                                          () {
+                                                            deleteReview(
+                                                              reviewId,
+                                                              password,
+                                                            );
+                                                          },
                                                         );
                                                       },
-                                                    );
-                                                  }
-                                                }, review["password"]);
+                                                );
                                               },
                                               style: ButtonStyle(
                                                 padding:
@@ -304,72 +334,46 @@ class _MyWidgetState extends State<Detail> {
                                         SizedBox(height: 3),
                                         Row(
                                           children: [
-                                            RatingBarIndicator(
-                                              rating: review["rating"],
+                                            RatingBar(
+                                              initialRating: review["rating"]
+                                                  .toDouble(),
+                                              minRating: 0,
+                                              direction: Axis.horizontal,
+                                              allowHalfRating: true,
+                                              ignoreGestures: true, //읽기 전용
                                               itemCount: 5,
                                               itemSize: 20,
-                                              direction: Axis.horizontal,
-                                              itemBuilder: (context, index) {
-                                                final fullStars =
-                                                    review["rating"].floor();
-                                                final hasHalfStar =
-                                                    (review["rating"] -
-                                                        fullStars) >=
-                                                    0.5;
-                                                if (index < fullStars) {
-                                                  // 꽉 찬 별
-                                                  return Icon(
-                                                    Icons.star_rate_rounded,
-                                                    color: Color.fromARGB(
-                                                      255,
-                                                      242,
-                                                      151,
-                                                      160,
-                                                    ),
-                                                  );
-                                                } else if (index == fullStars &&
-                                                    hasHalfStar) {
-                                                  // 반 별 커스텀
-                                                  return Stack(
-                                                    children: [
-                                                      Icon(
-                                                        Icons
-                                                            .star_outline_rounded,
-                                                        color: Color.fromARGB(
-                                                          255,
-                                                          242,
-                                                          151,
-                                                          160,
-                                                        ),
-                                                      ),
-                                                      ClipRect(
-                                                        clipper: _HalfClipper(),
-                                                        child: Icon(
-                                                          Icons
-                                                              .star_rate_rounded,
-                                                          color: Color.fromARGB(
-                                                            255,
-                                                            242,
-                                                            151,
-                                                            160,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  );
-                                                } else {
-                                                  // 빈 별
-                                                  return Icon(
-                                                    Icons.star_outline_rounded,
-                                                    color: Color.fromARGB(
-                                                      255,
-                                                      242,
-                                                      151,
-                                                      160,
-                                                    ),
-                                                  );
-                                                }
-                                              },
+                                              ratingWidget: RatingWidget(
+                                                full: Icon(
+                                                  Icons.star_rate_rounded,
+                                                  color: Color.fromRGBO(
+                                                    242,
+                                                    151,
+                                                    160,
+                                                    1,
+                                                  ), //꽉 찬 별
+                                                ),
+                                                half: Icon(
+                                                  Icons.star_half_rounded,
+                                                  color: Color.fromRGBO(
+                                                    242,
+                                                    151,
+                                                    160,
+                                                    1,
+                                                  ), //반 별
+                                                ),
+                                                empty: Icon(
+                                                  Icons.star_outline_rounded,
+                                                  color: Color.fromRGBO(
+                                                    242,
+                                                    151,
+                                                    160,
+                                                    1,
+                                                  ), //빈 별
+                                                ),
+                                              ),
+                                              onRatingUpdate:
+                                                  (_) {}, //필수 옵션이라 비어 둠
                                             ),
                                             Container(
                                               margin: EdgeInsets.symmetric(
@@ -488,7 +492,27 @@ class _MyWidgetState extends State<Detail> {
   }
 
   //기록내용 추가 팝업
-  Future<String?> addForm(context) {
+  Future<String?> addForm(
+    context, {
+    String? initialNickname,
+    String? initialContent,
+    String? initialPassword,
+    double initialRating = 0.0,
+    bool isEdit = false,
+    int? reviewId,
+  }) {
+    final TextEditingController nicknameController = TextEditingController(
+      text: initialNickname ?? '',
+    );
+    final TextEditingController contentController = TextEditingController(
+      text: initialContent ?? '',
+    );
+    final TextEditingController passwordController = TextEditingController(
+      text: initialPassword ?? '',
+    );
+
+    double rating = initialRating;
+
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
@@ -511,6 +535,7 @@ class _MyWidgetState extends State<Detail> {
                           alignment: Alignment.centerLeft,
                           child: RatingBar.builder(
                             initialRating: rating,
+                            glow: false,
                             minRating: 0.5,
                             direction: Axis.horizontal,
                             allowHalfRating: true,
@@ -521,6 +546,7 @@ class _MyWidgetState extends State<Detail> {
                               Icons.star_rate_rounded,
                               color: Color.fromARGB(255, 242, 151, 160),
                             ),
+                            unratedColor: Color.fromARGB(255, 238, 203, 206),
                             onRatingUpdate: (newRating) {
                               setModalState(() {
                                 rating = newRating;
@@ -530,6 +556,7 @@ class _MyWidgetState extends State<Detail> {
                         ),
                         SizedBox(height: 16),
                         TextFormField(
+                          controller: nicknameController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return "닉네임을 입력해 주세요!";
@@ -543,6 +570,7 @@ class _MyWidgetState extends State<Detail> {
                         ),
                         SizedBox(height: 16),
                         TextFormField(
+                          controller: contentController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return "기록 내용을 입력해 주세요!";
@@ -557,6 +585,7 @@ class _MyWidgetState extends State<Detail> {
                         ),
                         SizedBox(height: 16),
                         TextFormField(
+                          controller: passwordController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return "비밀번호를 입력해 주세요!";
@@ -582,33 +611,74 @@ class _MyWidgetState extends State<Detail> {
                         ElevatedButton(
                           onPressed: () async {
                             if (formkey.currentState!.validate()) {
-                              formkey.currentState!.save();
+                              if (isEdit &&
+                                  (reviewId == null || reviewId == 0)) {
+                                print("잘못된 reviewId: $reviewId");
+                                return;
+                              }
 
-                              // 서버로 POST 요청 보내기
+                              // formkey.currentState!.save();
+                              final passwordValue = passwordController.text;
+                              final nicknameValue = nicknameController.text;
+                              final contentValue = contentController.text;
+
+                              final body = isEdit
+                                  ? {
+                                      'review_id': reviewId.toString(),
+                                      'rev_nickname': nicknameController.text,
+                                      'password': passwordController.text,
+                                      'rev_content': contentController.text,
+                                      'rev_rating': rating.toString(),
+                                    }
+                                  : {
+                                      'book_id': selectedBook[0]['itemId']
+                                          .toString(),
+                                      'book_cover': selectedBook[0]['cover'],
+                                      'book_title': selectedBook[0]['title'],
+                                      'book_author': selectedBook[0]['author'],
+                                      'book_publisher':
+                                          selectedBook[0]['publisher'],
+                                      'book_pubDate':
+                                          selectedBook[0]['pubDate'],
+                                      'rev_nickname': nicknameController.text,
+                                      'rev_password': passwordController.text,
+                                      'rev_content': contentController.text,
+                                      'rev_rating': rating.toString(),
+                                    };
+
+                              if (isEdit &&
+                                  (reviewId == null || reviewId == 0)) {
+                                print("수정 요청인데 reviewId가 없습니다.");
+                                return;
+                              }
+
                               final response = await http.post(
                                 Uri.parse(
-                                  "http://localhost/heunjeok-server/bookreviews/insert.php",
+                                  isEdit
+                                      ? "http://localhost/heunjeok-server/bookreviews/update.php"
+                                      : "http://localhost/heunjeok-server/bookreviews/insert.php",
                                 ),
-                                body: {
-                                  'book_id': selectedBook!['itemId'].toString(),
-                                  'book_cover': selectedBook!['cover'],
-                                  'book_title': selectedBook!['title'],
-                                  'book_author': selectedBook!['author'],
-                                  'book_publisher': selectedBook!['publisher'],
-                                  'book_pubDate': selectedBook!['pubDate'],
-                                  'rev_nickname': nickname!,
-                                  'rev_password': password!,
-                                  'rev_content': content!,
-                                  'rev_rating': rating.toString(),
-                                },
+                                body: body,
                               );
 
                               if (response.statusCode == 200) {
-                                final result = json.decode(response.body);
-                                if (result['result'] == 'success') {
-                                  Navigator.pop(context, 'success');
+                                final responseBody = utf8.decode(
+                                  response.bodyBytes,
+                                );
+                                final result = json.decode(responseBody);
+                                print("서버 응답: $result");
+                                if (result['success'] == true) {
+                                  Navigator.pop(context, 'success'); // 팝업 닫기
+                                } else {
+                                  print(
+                                    "서버에서 실패 응답 받음: ${result['message'] ?? '메시지 없음'}",
+                                  );
                                 }
+                              } else {
+                                print("서버 요청 실패: ${response.statusCode}");
                               }
+                              print(response.body.runtimeType); // 타입 확인
+                              print(response.body); // 실제 값
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -649,48 +719,63 @@ class _MyWidgetState extends State<Detail> {
   }
 
   //흔적 비밀번호 팝업
-  void passwordAlertDialog(
-    Function(String) onConfirmed,
-    String correctPassword,
-  ) {
+  void passwordAlertDialog({
+    required int reviewId,
+    required void Function(String password) onConfirmed,
+  }) {
     final TextEditingController pwController = TextEditingController();
+    String? errorMessage;
+
     showDialog(
       context: context,
-      builder: (_) {
-        String enteredPassword = '';
-        String? errorMessage;
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          title: Text('비밀번호를 입력해주세요.'),
-          content: TextField(
-            controller: pwController,
-            obscureText: true,
-            decoration: InputDecoration(hintText: '흔적 남길 때, 작성한 비밀번호를 입력해주세요'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                if (enteredPassword == correctPassword) {
-                  Navigator.pop(context);
-                  onConfirmed(enteredPassword);
-                } else {
-                  setState(() {
-                    errorMessage = '비밀번호가 일치하지 않습니다.';
-                  });
-                }
-              },
-              child: Text('확인'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('취소'),
-            ),
-          ],
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              title: Text('비밀번호를 입력해주세요.'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: pwController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: '흔적 남길 때 작성한 비밀번호를 입력해주세요',
+                      errorText: errorMessage,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    final pw = pwController.text;
+                    final result = await checkPasswordServer(reviewId, pw);
+
+                    if (result) {
+                      Navigator.pop(context);
+                      onConfirmed(pw); // 서버 확인 통과 시
+                    } else {
+                      setState(() {
+                        errorMessage = '비밀번호가 일치하지 않습니다.';
+                      });
+                    }
+                  },
+                  child: Text('확인'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('취소'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -728,9 +813,48 @@ class _MyWidgetState extends State<Detail> {
   }
 
   //흔적 삭제 함수
-  void deleteReview(String reviewId) {
-    setState(() {
-      reviews.removeWhere((review) => review['review_id'] == reviewId);
+  void deleteReview(int reviewId, String password) async {
+    final response = await http.post(
+      Uri.parse('http://localhost/heunjeok-server/bookreviews/delete.php'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'review_id': reviewId, 'password': password.trim()}),
+    );
+    final data = jsonDecode(response.body);
+    if (data['success'] == true) {
+      setState(() {
+        reviews = List.from(reviews)
+          ..removeWhere(
+            (review) => review['review_id'].toString() == reviewId.toString(),
+          );
+      });
+      print("삭제 성공");
+    } else {
+      print("삭제 실패: ${data['message']}");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('삭제 실패: ${data['message']}')));
+    }
+  }
+
+  //비밀번호 확인용 함수
+  Future<bool> checkPasswordServer(int reviewId, String password) async {
+    final bodyJson = jsonEncode({
+      'review_id': reviewId,
+      'password': password.trim(),
     });
+    print("서버에 보내는 JSON body: $bodyJson");
+
+    final response = await http.post(
+      Uri.parse(
+        'http://localhost/heunjeok-server/bookreviews/password_check.php',
+      ),
+      headers: {'Content-Type': 'application/json'},
+      body: bodyJson,
+    );
+    print("[Flutter] 서버 응답 상태 코드: ${response.statusCode}");
+    print("[Flutter] 서버 응답 body: ${response.body}");
+
+    final data = json.decode(response.body);
+    return data['success'] == true;
   }
 }

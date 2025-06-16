@@ -86,7 +86,7 @@ class _SearchWidgetState extends State<Search>
                       final value = _controller.text.trim();
                       await addRecentSearch(value);
                       bookController.search(_controller.text);
-                      _controller.clear();
+                      bookController.writeSearch(_controller.text);
                     },
                   ),
                 ),
@@ -97,7 +97,7 @@ class _SearchWidgetState extends State<Search>
               onSubmitted: (value) async {
                 await addRecentSearch(value);
                 bookController.search(_controller.text);
-                _controller.clear();
+                bookController.writeSearch(_controller.text);
               },
             ),
           ),
@@ -119,6 +119,7 @@ class _SearchWidgetState extends State<Search>
                         onTap: () {
                           _controller.text = item;
                           bookController.search(item);
+                          bookController.writeSearch(item);
                           addRecentSearch(item);
                         },
                         child: Container(
