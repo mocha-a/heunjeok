@@ -13,7 +13,7 @@ class BookApi {
       final List<dynamic> items = data; // item 리스트 추출
       return items; // 리스트 반환
     } else {
-      throw Exception('책 검색 실패: ${response.statusCode}');
+      throw Exception('추천 도서 가져오기 실패: ${response.statusCode}');
     }
   }
 
@@ -27,7 +27,7 @@ class BookApi {
       final List<dynamic> items = data; // item 리스트 추출
       return items; // 리스트 반환
     } else {
-      throw Exception('책 검색 실패: ${response.statusCode}');
+      throw Exception('베스트셀러 가져오기 실패: ${response.statusCode}');
     }
   }
 

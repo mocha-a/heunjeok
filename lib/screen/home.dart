@@ -1,7 +1,5 @@
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:heunjeok/controller/book_api.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -22,9 +20,10 @@ class Home extends StatefulWidget {
 
 class _MyWidgetState extends State<Home> {
   var apiUrl = dotenv.env['API_URL'];
+
   // 각 링크를 Uri로 선언
-  final Uri vercel = Uri.parse('https://www.naver.com');
-  final Uri github = Uri.parse('https://github.com/mocha-a/heunjeok.git');
+  final Uri vercel = Uri.parse('https://heunjeok.vercel.app/');
+  final Uri github = Uri.parse('https://github.com/mocha-a/heunjeok-web');
   final Uri figma = Uri.parse(
     'https://www.figma.com/design/3Bfs2RCc7jE82qRQeDqJUL/4%EC%B0%A8-mini-Project-%EC%BB%A4%EB%AE%A4%EB%8B%88%ED%8B%B0?node-id=34-1683&t=suYftO5FdlUbrGxh-1',
   );
@@ -57,30 +56,20 @@ class _MyWidgetState extends State<Home> {
 
   Future<void> loadAllData() async {
     //2개 api가 다 불러올 때 까지 기다렸다가~
-    await Future.wait([recommendApi(), bestsellerApi()]);
+    try {
+      final results = await Future.wait([
+        BookApi.recommendApi(), //추천도서
+        BookApi.bestsellerApi(), //베스트셀러
+      ]);
 
-    //모두 완료되면 false
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  //알라딘 추천도서 api
-  Future<void> recommendApi() async {
-    final response = await http.get(Uri.parse('${apiUrl}/recommend.php'));
-
-    setState(() {
-      recommend = json.decode(response.body);
-    });
-  }
-
-  //알라딘 베스트셀러 api
-  Future<void> bestsellerApi() async {
-    final response = await http.get(Uri.parse('${apiUrl}/bestseller.php'));
-
-    setState(() {
-      bestseller = json.decode(response.body);
-    });
+      setState(() {
+        recommend = results[0];
+        bestseller = results[1];
+        isLoading = false;
+      });
+    } catch (e) {
+      print('에러 발생: $e');
+    }
   }
 
   @override
@@ -445,10 +434,10 @@ class _MyWidgetState extends State<Home> {
                   SizedBox(width: 150, child: Divider()),
                   Text(
                     '''
-      대표 : 소연희, 안지현
-      서울특별시 강남구 강남대로98길 16
-      사업자번호 : 123-45-67890
-      heunjeok@gmail.com
+대표 : 소연희, 안지현
+서울특별시 강남구 강남대로98길 16
+사업자번호 : 123-45-67890
+heunjeok@gmail.com
                       ''',
                     style: TextStyle(height: 1.3),
                     textAlign: TextAlign.center,

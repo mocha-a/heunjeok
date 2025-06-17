@@ -17,6 +17,7 @@ class Book extends StatefulWidget {
 
 class _MyWidgetState extends State<Book> {
   var bookapiUrl = dotenv.env['BOOK_API_URL'];
+
   List<Map<String, dynamic>> book = []; // 책 정보
   List<Map<String, dynamic>> reviews = []; // 리뷰 목록
   late final ScrollController _scrollController;

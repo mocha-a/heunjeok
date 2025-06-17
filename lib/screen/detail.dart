@@ -19,6 +19,7 @@ class Detail extends StatefulWidget {
 class _MyWidgetState extends State<Detail> {
   var apiUrl = dotenv.env['API_URL'];
   var bookapiUrl = dotenv.env['BOOK_API_URL'];
+
   List<dynamic> selectedBook = [];
   List<Map<String, dynamic>> reviews = []; // 리뷰 목록
 
