@@ -6,6 +6,7 @@ class BookApi {
   // 추천 도서
   static Future<List<dynamic>> recommendApi() async {
     var apiUrl = dotenv.env['API_URL'];
+
     final response = await http.get(Uri.parse('${apiUrl}/recommend.php'));
 
     if (response.statusCode == 200) {
@@ -20,6 +21,7 @@ class BookApi {
   // 베스트셀러
   static Future<List<dynamic>> bestsellerApi() async {
     var apiUrl = dotenv.env['API_URL'];
+
     final response = await http.get(Uri.parse('${apiUrl}/bestseller.php'));
 
     if (response.statusCode == 200) {
@@ -37,6 +39,7 @@ class BookApi {
     int page = 1,
   }) async {
     var apiUrl = dotenv.env['API_URL'];
+
     final response = await http.get(
       Uri.parse(
         '${apiUrl}/search_book.php?query=${Uri.encodeComponent(query)}&page=$page',
