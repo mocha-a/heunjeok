@@ -128,7 +128,8 @@
 이 저장소에는 Flutter 웹 빌드 결과물만 포함되어 있습니다.<br>
 프로젝트 전체 소스를 보시려면 아래 링크를 클릭해 주세요 !
 
-- [전체 소스 코드 Repository](https://github.com/mocha-a/heunjeok)
+- [Flutter 전체 소스](https://github.com/mocha-a/heunjeok)
+- [PHP 소스](https://github.com/mocha-a/heunjeok-server.git)
 
 ## 📚 참고 URL
 
